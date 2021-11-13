@@ -52,7 +52,9 @@ env_name = 'CartPole-v0'
 env = suite_gym.load(env_name)
 
 env.reset()
-PIL.Image.fromarray(env.render())
+image = PIL.Image.fromarray(env.render())
+plt.imshow(image)
+plt.show()
 
 print('Observation Spec:')
 print(env.time_step_spec().observation)
@@ -288,7 +290,7 @@ plt.ylim(top=250)
 
 
 def embed_mp4(filename):
-  """Embeds an mp4 file in the notebook."""
+  '''Embeds an mp4 file in the notebook.'''
   video = open(filename,'rb').read()
   b64 = base64.b64encode(video)
   tag = '''
@@ -315,3 +317,7 @@ def create_policy_eval_video(policy, filename, num_episodes=5, fps=30):
 create_policy_eval_video(agent.policy, "trained-agent")
 
 create_policy_eval_video(random_policy, "random-agent")
+
+env.close()
+train_env.close()
+eval_env.close()

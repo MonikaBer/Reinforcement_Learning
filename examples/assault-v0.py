@@ -12,10 +12,11 @@ import numpy as np
 import PIL.Image
 import pyvirtualdisplay
 import reverb
+import os
 
 import tensorflow as tf
 
-'''
+
 from tf_agents.agents.dqn import dqn_agent
 from tf_agents.drivers import py_driver
 from tf_agents.environments import suite_gym
@@ -30,7 +31,7 @@ from tf_agents.replay_buffers import reverb_utils
 from tf_agents.trajectories import trajectory
 from tf_agents.specs import tensor_spec
 from tf_agents.utils import common
-'''
+
 
 import gym
 from gym import envs
@@ -51,16 +52,42 @@ log_interval = 200  # @param {type:"integer"}
 num_eval_episodes = 10  # @param {type:"integer"}
 eval_interval = 1000  # @param {type:"integer"}
 
+def specs(env):
+    print('Env:')
+    print(env)
+
+    print('Observation Spec:')
+    print(env.time_step_spec().observation)
+
+    print('Reward Spec:')
+    print(env.time_step_spec().reward)
+
+    print('Action Spec:')
+    print(env.action_spec())
+
+def showRender(image):
+    image = PIL.Image.fromarray(image)
+    plt.imshow(image)
+    plt.show()
+
 def testLoad():
     env_name = 'Assault-v0'
-    #env_name = 'Asteroids-v0'
-    env = gym.make(env_name)
-    #env = suite_gym.load(env_name)
+    env = suite_gym.load(env_name)
+    #env = gym.make(env_name)
 
     env.reset()
-    img = env.render(mode='rgb_array')
-    img = PIL.Image.fromarray(img)
-    plt.imshow(img)
+    specs(env)
+    img = env.render()
+    showRender(img)
+
+def test():
+    display = pyvirtualdisplay.Display(visible=0, size=(1400, 900)).start()
+    env_name = 'Assault-v0'
+    env = suite_gym.load(env_name)
+
+    env.reset()
+    image = PIL.Image.fromarray(env.render())
+    plt.imshow(image)
     plt.show()
 
 testLoad()
