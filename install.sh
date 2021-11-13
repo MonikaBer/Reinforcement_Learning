@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# uwaga, nie należy wykonywać pip install <pakiet> --upgrade, ponieważ nowsze wersje mogą okazać się niekompatybilne.
+
 sudo apt install cuda-toolkit-11-5 libcudnn8
 pip install dm-env dm-reverb tensorboard
 pip install gym[atari]
