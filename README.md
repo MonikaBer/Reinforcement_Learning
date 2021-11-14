@@ -9,6 +9,8 @@ acme: https://github.com/deepmind/acme
 
 aktor - krytyk: https://www.tensorflow.org/tutorials/reinforcement_learning/actor_critic
 
+reverb - https://arxiv.org/pdf/2102.04736.pdf
+
 sudo apt install cuda-toolkit-11-5
 pip install autorom[accept-rom-license]
 pip install dm-env
