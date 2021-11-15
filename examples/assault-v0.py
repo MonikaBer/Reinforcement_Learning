@@ -104,6 +104,50 @@ def showRender(image):
     plt.imshow(image)
     plt.show()
 
+def simpleModel(
+    input_tensor=tf.keras.Input(shape=(210, 160, 3), batch_size=batch_size, dtype=tf.float32, sparse=False, tensor=None, ragged=False, type_spec=None),
+    pooling='max',
+    classes=7,
+    classifier_activation='softmax'
+):
+    print("Creating simple model")
+    x = []
+    img_input = input_tensor
+    pooling = None
+    if pooling == 'avg':
+        pooling = getAvgPool
+    elif pooling == 'max':
+        pooling = getMaxPool
+
+    # trzeba skonwertować obraz z uint8 na float32
+    """
+    # Block 1
+    x += [tf.keras.layers.Rescaling(1./255, input_shape=(batch_size, img_height, img_width, 3)),
+        tf.keras.layers.Conv2D(
+        64, (3, 3), activation='relu', padding='same', name='block1_conv1', input_shape=(batch_size, img_height, img_width, in_channels)),
+        tf.keras.layers.Conv2D(
+            64, (3, 3), activation='relu', padding='same', name='block1_conv2'),
+        tf.keras.layers.MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')
+    ]
+    """
+
+    # Classification block
+    x += [tf.keras.layers.Rescaling(1./255, input_shape=(batch_size, img_height, img_width, 3)),
+        tf.keras.layers.Flatten(name='flatten'),
+        tf.keras.layers.Dense(32, activation='relu', name='fc1'),
+        tf.keras.layers.Dense(32, activation='relu', name='fc2'),
+        tf.keras.layers.Dense(classes, activation=classifier_activation,
+            name='predictions')
+    ]
+
+    if pooling == 'avg':
+        x += [layers.GlobalAveragePooling2D()]
+    elif pooling == 'max':
+        x += [layers.GlobalMaxPooling2D()]
+
+    return x
+
+
 def VGG19(
         input_tensor=tf.keras.Input(shape=(210, 160, 3), batch_size=batch_size, dtype=tf.float32, sparse=False, tensor=None, ragged=False, type_spec=None),
         pooling='max',
@@ -178,6 +222,7 @@ def VGG19(
     def getAvgPool():
         return tf.keras.layers.AveragePooling2D((2, 2))
 
+    print("Creating VGG19")
     x = []
     img_input = input_tensor
     pooling = None
@@ -269,6 +314,13 @@ def tensorBoardCallBack(model, logDir):
     #tensorboard --logdir logs
     return tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
+def createSimpleModelCustom():
+    x = simpleModel()
+
+    # Create model.
+    model = tf_agents.networks.sequential.Sequential(x)
+    return model
+
 def createVGG19Custom():
     # python3.8/site-packages/tensorflow/python/keras/applications/vgg19.py
     # trzeba skopiować, bo keras layers to nie to samo co tf-agent. Trzeba użyć
@@ -322,11 +374,16 @@ def createAgent(env_name, q_net, learning_rate):
 
     agent.initialize()
     print("agent_initialized")
-    return agent
+    return agent, train_py_env
 
 def compute_avg_return(environment, policy, num_episodes=10):
+    '''
+        To może długo trwać, przechodzi przez wszystkie epizody.
+    '''
     total_return = 0.0
-    for _ in range(num_episodes):
+    print("Compute average return. Max", num_episodes)
+    for episode in range(num_episodes):
+        print("Episode:", episode)
         time_step = environment.reset()
         episode_return = 0.0
 
@@ -347,6 +404,7 @@ def testAction(env, action, number):
     create_policy_eval_video(random_policy, "random-agent")
 
 def setSever(agent, replay_buffer_max_length, table_name):
+    print("Setting server")
     replay_buffer_signature = tensor_spec.from_spec(
         agent.collect_data_spec)
     replay_buffer_signature = tensor_spec.add_outer_dim(
@@ -360,10 +418,11 @@ def setSever(agent, replay_buffer_max_length, table_name):
         rate_limiter=reverb.rate_limiters.MinSize(1),
         signature=replay_buffer_signature)
 
+    print("Server set")
     return reverb.Server([table])
 
 def setReply(agent, reverb_server, batch_size, table_name):
-
+    print("Setting reply")
     replay_buffer = reverb_replay_buffer.ReverbReplayBuffer(
     agent.collect_data_spec,
     table_name=table_name,
@@ -381,37 +440,49 @@ def setReply(agent, reverb_server, batch_size, table_name):
     num_steps=2).prefetch(3)
 
     iterator = iter(dataset)
-    return iterator
+    print("Reply set")
+    return iterator, rb_observer
 
-def setDriver(agent, env, rb_observer):
+def setDriver(agent, env, rb_observer, env_name, init_num_episodes=10):
+    print("Setting driver")
+    eval_py_env = suite_gym.load(env_name)
+    eval_env = tf_py_environment.TFPyEnvironment(eval_py_env)
+
     # Reset the train step.
     agent.train_step_counter.assign(0)
 
     # Evaluate the agent's policy once before training.
-    avg_return = compute_avg_return(eval_env, agent.policy, num_eval_episodes)
-    returns = [avg_return]
+    avg_return = compute_avg_return(eval_env, agent.policy, num_episodes=init_num_episodes)
+    returns = [0]
 
-    # Reset the environment.
-    time_step = train_py_env.reset()
-
-
+    print("Creating driver")
     collect_driver = py_driver.PyDriver(
         env,
         py_tf_eager_policy.PyTFEagerPolicy(
         agent.collect_policy, use_tf_function=True),
         [rb_observer],
         max_steps=collect_steps_per_iteration)
+    print("Driver created")
 
-    return collect_driver, time_step, returns
+    return collect_driver, returns
 
-def trainLoop(agent, time_step, iterator, num_iterations):
-    for _ in range(num_iterations):
+def trainLoop(agent, collect_driver, train_py_env, iterator, num_iterations):
+    # Reset the environment.
+    time_step = train_py_env.reset()
+
+    print("Start train loop")
+    for niter in range(num_iterations):
+        print("Iteration:", niter)
         # Collect a few steps and save to the replay buffer.
+        print("Collect driver steps", time_step)
         time_step, _ = collect_driver.run(time_step)
+        print("End collecting driver steps")
 
         # Sample a batch of data from the buffer and update the agent's network.
         experience, unused_info = next(iterator)
+        print("Start train")
         train_loss = agent.train(experience).loss
+        print("End train")
 
         step = agent.train_step_counter.numpy()
 
@@ -423,6 +494,8 @@ def trainLoop(agent, time_step, iterator, num_iterations):
             print('step = {0}: Average Return = {1}'.format(step, avg_return))
             returns.append(avg_return)
 
+    print("End train loop")
+
 def testLoad():
     env_name = 'Assault-v0'
     table_name = 'uniform_table'
@@ -432,11 +505,12 @@ def testLoad():
     #testAction(env, np.array(1, dtype=np.int32), 1000)
     #specs(env)
     #q_net = createNet(env=env)
-    q_net = createVGG19Custom()
-    agent = createAgent(env_name=env_name, q_net=q_net, learning_rate=learning_rate)
+    q_net = createSimpleModelCustom()
+    agent, train_py_env = createAgent(env_name=env_name, q_net=q_net, learning_rate=learning_rate)
     server = setSever(agent=agent, replay_buffer_max_length=replay_buffer_max_length, table_name=table_name)
-    replyIterator = setReply(agent=agent, reverb_server=server, batch_size=batch_size, table_name=table_name)
-    #collect_driver, time_step, returns = setDriver(agent=agent)
+    replyIterator, rb_observer = setReply(agent=agent, reverb_server=server, batch_size=batch_size, table_name=table_name)
+    collect_driver, returns = setDriver(agent=agent, env=env, rb_observer=rb_observer, env_name=env_name, init_num_episodes=1)
+    trainLoop(agent=agent, collect_driver=collect_driver, train_py_env=train_py_env, iterator=replyIterator, num_iterations=num_iterations)
 
     img = env.render()
     showRender(img)
