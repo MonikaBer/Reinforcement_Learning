@@ -364,6 +364,8 @@ def createAgent(env_name, q_net, learning_rate):
 
     train_step_counter = tf.Variable(0)
 
+    print(train_env.action_spec())
+
     agent = dqn_agent.DqnAgent(
         train_env.time_step_spec(),
         train_env.action_spec(),
@@ -498,6 +500,7 @@ def trainLoop(agent, collect_driver, train_py_env, iterator, num_iterations):
 
 def testLoad():
     env_name = 'Assault-v0'
+    #env_name = 'CartPole-v0'
     table_name = 'uniform_table'
     env = suite_gym.load(env_name)
 
@@ -507,10 +510,10 @@ def testLoad():
     #q_net = createNet(env=env)
     q_net = createSimpleModelCustom()
     agent, train_py_env = createAgent(env_name=env_name, q_net=q_net, learning_rate=learning_rate)
-    server = setSever(agent=agent, replay_buffer_max_length=replay_buffer_max_length, table_name=table_name)
-    replyIterator, rb_observer = setReply(agent=agent, reverb_server=server, batch_size=batch_size, table_name=table_name)
-    collect_driver, returns = setDriver(agent=agent, env=env, rb_observer=rb_observer, env_name=env_name, init_num_episodes=1)
-    trainLoop(agent=agent, collect_driver=collect_driver, train_py_env=train_py_env, iterator=replyIterator, num_iterations=num_iterations)
+    #server = setSever(agent=agent, replay_buffer_max_length=replay_buffer_max_length, table_name=table_name)
+    #replyIterator, rb_observer = setReply(agent=agent, reverb_server=server, batch_size=batch_size, table_name=table_name)
+    #collect_driver, returns = setDriver(agent=agent, env=env, rb_observer=rb_observer, env_name=env_name, init_num_episodes=1)
+    #trainLoop(agent=agent, collect_driver=collect_driver, train_py_env=train_py_env, iterator=replyIterator, num_iterations=num_iterations)
 
     img = env.render()
     showRender(img)

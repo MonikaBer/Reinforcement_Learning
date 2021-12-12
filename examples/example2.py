@@ -48,13 +48,16 @@ log_interval = 200  # @param {type:"integer"}
 num_eval_episodes = 10  # @param {type:"integer"}
 eval_interval = 1000  # @param {type:"integer"}
 
-env_name = 'CartPole-v0'
+env_name = 'Assault-v0'
 env = suite_gym.load(env_name)
 
 env.reset()
 image = PIL.Image.fromarray(env.render())
 plt.imshow(image)
 plt.show()
+
+print('time_step_spec Spec:')
+print(env.time_step_spec())
 
 print('Observation Spec:')
 print(env.time_step_spec().observation)
@@ -74,6 +77,7 @@ action = np.array(1, dtype=np.int32)
 next_time_step = env.step(action)
 print('Next time step:')
 print(next_time_step)
+exit()
 
 train_py_env = suite_gym.load(env_name)
 eval_py_env = suite_gym.load(env_name)
@@ -155,28 +159,6 @@ def compute_avg_return(environment, policy, num_episodes=10):
 # https://github.com/tensorflow/agents/tree/master/tf_agents/metrics
 
 
-def compute_avg_return(environment, policy, num_episodes=10):
-
-  total_return = 0.0
-  for _ in range(num_episodes):
-
-    time_step = environment.reset()
-    episode_return = 0.0
-
-    while not time_step.is_last():
-      action_step = policy.action(time_step)
-      time_step = environment.step(action_step.action)
-      episode_return += time_step.reward
-    total_return += episode_return
-
-  avg_return = total_return / num_episodes
-  return avg_return.numpy()[0]
-
-
-# See also the metrics module for standard implementations of different metrics.
-# https://github.com/tensorflow/agents/tree/master/tf_agents/metrics
-
-
 compute_avg_return(eval_env, random_policy, num_eval_episodes)
 
 table_name = 'uniform_table'
@@ -206,9 +188,9 @@ rb_observer = reverb_utils.ReverbAddTrajectoryObserver(
   table_name,
   sequence_length=2)
 
-agent.collect_data_spec
+print(agent.collect_data_spec)
 
-agent.collect_data_spec._fields
+print(agent.collect_data_spec._fields)
 
 py_driver.PyDriver(
     env,
@@ -287,7 +269,7 @@ plt.plot(iterations, returns)
 plt.ylabel('Average Return')
 plt.xlabel('Iterations')
 plt.ylim(top=250)
-
+plt.show()
 
 def embed_mp4(filename):
   '''Embeds an mp4 file in the notebook.'''
@@ -321,3 +303,4 @@ create_policy_eval_video(random_policy, "random-agent")
 env.close()
 train_env.close()
 eval_env.close()
+reverb_server.stop()
