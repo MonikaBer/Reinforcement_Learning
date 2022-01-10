@@ -1,7 +1,4 @@
-#@title Import modules.
-#python3
 
-%%capture
 import copy
 import pyvirtualdisplay
 import imageio 
