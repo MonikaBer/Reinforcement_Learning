@@ -119,12 +119,14 @@ display_video(np.array(frames))
 #    one sample in the replay table.
 # 4. we use a default table name so we don't have to repeat it many times below;
 #    if we left this off we'd need to feed it into adders/actors/etc. below.
+    
 replay_buffer = reverb.Table(
     name=adders.DEFAULT_PRIORITY_TABLE,
     max_size=1000000,
     remover=reverb.selectors.Fifo(),
     sampler=reverb.selectors.Uniform(),
-    rate_limiter=reverb.rate_limiters.MinSize(min_size_to_sample=1))
+    rate_limiter=reverb.rate_limiters.MinSize(min_size_to_sample=1),
+    signature = adders.NStepTransitionAdder.signature(environment_spec))
 
 # Get the server and address so we can give it to the modules such as our actor
 # that will interact with the replay buffer.
@@ -169,7 +171,6 @@ for episode in range(num_episodes):
 dataset = datasets.make_dataset(
     server_address=replay_server_address,
     batch_size=256,
-    environment_spec=environment_spec,
     transition_adder=True)
 
 critic_network = snt.Sequential([
