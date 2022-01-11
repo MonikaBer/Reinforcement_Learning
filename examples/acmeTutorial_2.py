@@ -168,10 +168,11 @@ for episode in range(num_episodes):
 # This connects to the created reverb server; also note that we use a transition
 # adder above so we'll tell the dataset function that so that it knows the type
 # of data that's coming out.
-dataset = datasets.make_dataset(
+dataset = iter(datasets.make_dataset(
     server_address=replay_server_address,
     batch_size=256,
-    transition_adder=True)
+    transition_adder=True,
+    prefetch_size=4))
 
 critic_network = snt.Sequential([
     networks.CriticMultiplexer(
@@ -203,7 +204,7 @@ learner = d4pg.D4PGLearner(policy_network=policy_network,
                            critic_network=critic_network,
                            target_policy_network=target_policy_network,
                            target_critic_network=target_critic_network,
-                           dataset=dataset,
+                           dataset_iterator=dataset,
                            discount=0.99,
                            target_update_period=100,
                            policy_optimizer=snt.optimizers.Adam(1e-4),
@@ -278,3 +279,5 @@ for _ in range(num_steps):
 
 # Save video of the behaviour.
 display_video(np.array(frames))
+
+del replay_server
