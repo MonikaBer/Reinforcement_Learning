@@ -18,32 +18,39 @@ from acme.agents import agent
 from acme.tf import utils as tf2_utils
 from acme.utils import loggers
 
+from acme.wrappers.gym_wrapper import GymAtariAdapter
+import gym
+
 import gym 
 import dm_env
 from dm_control import suite
+
 import matplotlib.pyplot as plt
 import numpy as np
 import reverb
 import sonnet as snt
 import tensorflow as tf
 
+def createEnv(envName):
+    genv = gym.make(envName)
+    return GymAtariAdapter(genv)
 
 environment_name = 'Assault-v0' 
-createEnv(environment_name)
-exit(0)
+env = createEnv(environment_name)
+print(env)
+
+# /mnt/828A9CD08A9CC259/Studia/magisterka/sem1/USD/acme/lib/python3.8/site-packages/AutoROM/roms/assault.bin
+# /mnt/828A9CD08A9CC259/Studia/magisterka/sem1/USD/acme/lib/python3.8/site-packages/atari_py/atari_roms/assault.bin
 
 def createDisplay(x = 160, y = 210):
 	return pyvirtualdisplay.Display(visible=0, size=(x, y)).start()
-
-def createEnv(envName):
-    env = suite.build_environment(envName, 'balance')
 
 
 def make_environment(domain_name='cartpole', task='balance'):
     env = suite.load(domain_name, task)
     env = wrappers.SinglePrecisionWrapper(env)
     return env
-
+exit(0)
 environment = make_environment(environment_name)
 
 if 'dm_cartpole' in environment_name:
