@@ -5,12 +5,14 @@ import imageio
 import base64
 import IPython
 
+import acme
 from acme import environment_loop
 from acme.tf import networks
 from acme.adders import reverb as adders
 from acme.agents.tf import actors as actors
 from acme.datasets import reverb as datasets
 from acme.wrappers import gym_wrapper
+from acme.wrappers import atari_wrapper
 from acme import specs
 from acme import wrappers
 from acme.agents import tf
@@ -20,6 +22,7 @@ from acme.utils import loggers
 
 from acme.wrappers.gym_wrapper import GymAtariAdapter
 import gym
+import atari_py
 
 import gym 
 import dm_env
@@ -33,21 +36,81 @@ import sonnet as snt
 import tensorflow as tf
 
 from acme.agents.tf import dqn
+import functools 
 
-def run():
-    environment_name = 'Assault-v0' 
-    env = createEnv(environment_name)
-    sp = getEnvSpec(env)
-    print(sp.actions[0].num_values)
-    #printEnv(getEnvSpec(env))
+##
+##
+##
+## Pod spodem podaję funkcje przydatne podczas debugowania.
+## Przy niektórych z nich pozostawiam również komentarz wyjaśniający niektóre sprawy
+##
+##
+##
+
+def printAttrs(obj):
+    print(vars(obj))
+    #
+    # Dla Assault-v0 env to
+    #{'env': <gym.envs.atari.atari_env.AtariEnv object at 0x7fdc4d858c10>, 'action_space': Discrete(7), 
+    # 'observation_space': Box(210, 160, 3), 'reward_range': (-inf, inf), 'metadata': {'render.modes': ['human', 'rgb_array']}, 
+    # '_max_episode_seconds': None, '_max_episode_steps': 10000, '_elapsed_steps': 0, '_episode_started_at': None}
+    #
+    # Z tego wynika, że nie można używać tutaj wrapera od Atari, bo nie ma obiektu 'ale' czyli liczby żyć. Jest jedynie wynik.
+    # specs.make_environment_spec(env) to pobiera.
+
+def printSpec(env):
+    print(getEnvSpec(env))
+
+# https://stackoverflow.com/questions/67656740/exception-rom-is-missing-for-ms-pacman-see-https-github-com-openai-atari-py
+
+# trzeba w sieci zorbić wstępną obróbkę danych, przerobić obserwacje z int8 do float [0, 1] dla conv
+# dla ConvND self._dtype = inputs.dtype
+# print(getEnvSpec(env))
+# observations=BoundedArray(shape=(210, 160, 3), dtype=dtype('uint8'), name='observation', minimum=[[[0 0 0]
+# na początku modelu trzeba dodać odpowiednią warstwę, może z tf bezpośrednio?
+
+##
+##  koniec
+##
 
 def createDisplay(x = 160, y = 210):
 	return pyvirtualdisplay.Display(visible=0, size=(x, y)).start()
 
 def createEnv(envName):
-    genv = gym.make(envName)
-    env = GymAtariAdapter(genv)
-    return wrappers.SinglePrecisionWrapper(env) 
+    #genv = gym.make(envName)
+    #env = GymAtariAdapter(genv)
+    #env = wrappers.SinglePrecisionWrapper(env) 
+    #return env
+    env = gym.make(envName)
+    
+    #print(gym.envs.registry.all())
+    #print(env.ale.lives())
+    env = gym_wrapper.GymWrapper(env)
+    #env = wrappers.CanonicalSpecWrapper(env)
+    #env = wrappers.AtariWrapper(env, to_float=True)
+    #env = gym_wrapper.GymAtariAdapter(env)
+    #env = wrappers.CanonicalSpecWrapper(env, clip=True)
+    #env = wrappers.SinglePrecisionWrapper(env)
+    #env = atari_wrapper.AtariWrapper(env)
+    #env = wrappers.CanonicalSpecWrapper(env, clip=True)
+    env = wrappers.SinglePrecisionWrapper(env)
+
+    '''wrapper_list = [
+        wrappers.GymAtariAdapter,
+        functools.partial(
+            wrappers.AtariWrapper,
+            to_float=True,
+            max_episode_len=1000,
+            zero_discount_on_life_loss=True,
+        ),
+        wrappers.SinglePrecisionWrapper,
+        wrappers.ObservationActionRewardWrapper,
+    ]
+    env = wrappers.wrap_all(env, wrapper_list)'''
+
+    timestep = env.reset()
+    return env
+
 
 def getEnvSpec(env):
     return specs.make_environment_spec(env)
@@ -59,13 +122,14 @@ def printEnv(envSpec):
     print('discounts:\n', envSpec.discounts, '\n')
 
 def createAgent(envSpec, explorationSigma = 0.3):
-    base = snt.Sequential(networks.AtariTorso.DQNAtariNetwork(envSpec.actions[0].num_values))
+    base = networks.DQNAtariNetwork(envSpec.actions[0].num_values)
     #net = snt.Sequential(base + [networks.ClippedGaussian(explorationSigma),
     #                    networks.ClipToSpec(envSpec.actions)])
-    return actors.dqn.DQN(envSpec, base)
+    base = snt.Sequential([tf.keras.layers.Rescaling(1./255, input_shape=(batch_size, img_height, img_width, 3))]) + base
+    return acme.agents.tf.dqn.agent.DQN(envSpec, base)
 
 def saveVideo(frames, filename='temp.mp4'):
-    if(isinstance(frames, list)):
+    if(not isinstance(frames, np.ndarray)):
         frames = np.array(frames)
     """Save and display video."""
     # Write video
@@ -128,6 +192,10 @@ def createReporter(serverAddress):
         transition_adder=True,
         prefetch_size=4))
     return dataset
+
+def loopAgent(env, agent, episodes):
+    loop = acme.EnvironmentLoop(env, agent)
+    loop.run(episodes)
 
 def rest():
     critic_network = snt.Sequential([
@@ -238,4 +306,36 @@ def rest():
 
     del replay_server
 
-run()
+def test():
+    environment_name = 'Assault-v4' 
+    env = createEnv(environment_name)
+    env_spec = acme.make_environment_spec(env)
+    network = networks.DQNAtariNetwork(env_spec.actions.num_values)
+
+    #print(env_spec)
+    agent = dqn.DQN(env_spec, network)
+
+    loop = acme.EnvironmentLoop(env, agent)
+    loop.run(FLAGS.num_episodes)
+
+def run():
+    environment_name = 'Assault-v4' 
+    display = createDisplay()
+    env = createEnv(environment_name)
+    espec = getEnvSpec(env)
+    print(espec)
+    agent = createAgent(espec)
+    
+    #loopAgent(env, agent, 500)
+    '''
+    server, address = createServer()
+    buffer = createExperienceBuffer(address)
+    collectExperience(env, buffer, agent, 4)
+
+    saveVideo(buffer)
+    '''
+
+#run()
+#print(type(np.array([0])))
+
+test()
