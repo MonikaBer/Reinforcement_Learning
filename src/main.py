@@ -1,7 +1,6 @@
-
 import copy
 import pyvirtualdisplay
-import imageio 
+import imageio
 import base64
 import IPython
 
@@ -24,7 +23,7 @@ from acme.wrappers.gym_wrapper import GymAtariAdapter
 import gym
 import atari_py
 
-import gym 
+import gym
 import dm_env
 from dm_control import suite
 #from dm_env import specs
@@ -36,7 +35,25 @@ import sonnet as snt
 import tensorflow as tf
 
 from acme.agents.tf import dqn
-import functools 
+import functools
+
+import pdb
+
+FLAGS = {
+    'num_episodes': 1
+}
+
+Images = tf.Tensor
+QValues = tf.Tensor
+
+class MyDQNAtariNetwork(networks.DQNAtariNetwork):
+    def __init__(self, num_actions: int):
+        networks.DQNAtariNetwork.__init__(self, num_actions)
+
+    def __call__(self, inputs: Images) -> QValues:
+        inputs = tf.cast(x = inputs, dtype = tf.float32)
+        return self._network(inputs)
+
 
 ##
 ##
@@ -51,8 +68,8 @@ def printAttrs(obj):
     print(vars(obj))
     #
     # Dla Assault-v0 env to
-    #{'env': <gym.envs.atari.atari_env.AtariEnv object at 0x7fdc4d858c10>, 'action_space': Discrete(7), 
-    # 'observation_space': Box(210, 160, 3), 'reward_range': (-inf, inf), 'metadata': {'render.modes': ['human', 'rgb_array']}, 
+    #{'env': <gym.envs.atari.atari_env.AtariEnv object at 0x7fdc4d858c10>, 'action_space': Discrete(7),
+    # 'observation_space': Box(210, 160, 3), 'reward_range': (-inf, inf), 'metadata': {'render.modes': ['human', 'rgb_array']},
     # '_max_episode_seconds': None, '_max_episode_steps': 10000, '_elapsed_steps': 0, '_episode_started_at': None}
     #
     # Z tego wynika, że nie można używać tutaj wrapera od Atari, bo nie ma obiektu 'ale' czyli liczby żyć. Jest jedynie wynik.
@@ -63,7 +80,7 @@ def printSpec(env):
 
 # https://stackoverflow.com/questions/67656740/exception-rom-is-missing-for-ms-pacman-see-https-github-com-openai-atari-py
 
-# trzeba w sieci zorbić wstępną obróbkę danych, przerobić obserwacje z int8 do float [0, 1] dla conv
+# trzeba w sieci zrobić wstępną obróbkę danych, przerobić obserwacje z int8 do float [0, 1] dla conv
 # dla ConvND self._dtype = inputs.dtype
 # print(getEnvSpec(env))
 # observations=BoundedArray(shape=(210, 160, 3), dtype=dtype('uint8'), name='observation', minimum=[[[0 0 0]
@@ -79,13 +96,13 @@ def createDisplay(x = 160, y = 210):
 def createEnv(envName):
     #genv = gym.make(envName)
     #env = GymAtariAdapter(genv)
-    #env = wrappers.SinglePrecisionWrapper(env) 
+    #env = wrappers.SinglePrecisionWrapper(env)
     #return env
     env = gym.make(envName)
-    
-    #print(gym.envs.registry.all())
+
     #print(env.ale.lives())
-    env = gym_wrapper.GymWrapper(env)
+    #print(gym.envs.registry.all())
+    #env = gym_wrapper.GymWrapper(env)
     #env = wrappers.CanonicalSpecWrapper(env)
     #env = wrappers.AtariWrapper(env, to_float=True)
     #env = gym_wrapper.GymAtariAdapter(env)
@@ -93,6 +110,8 @@ def createEnv(envName):
     #env = wrappers.SinglePrecisionWrapper(env)
     #env = atari_wrapper.AtariWrapper(env)
     #env = wrappers.CanonicalSpecWrapper(env, clip=True)
+
+    env = gym_wrapper.GymWrapper(env)
     env = wrappers.SinglePrecisionWrapper(env)
 
     '''wrapper_list = [
@@ -135,7 +154,7 @@ def saveVideo(frames, filename='temp.mp4'):
     # Write video
     with imageio.get_writer(filename, fps=60) as video:
         for frame in frames:
-            video.append_data(frame)
+           video.append_data(frame)
     # Read video and display the video
     video = open(filename, 'rb').read()
     b64_video = base64.b64encode(video)
@@ -153,19 +172,20 @@ def collectFrames(environment, actor, steps = 500):
         timestep = environment.step(action)
     return frames
 
-def createServer():
+def createServer(env_spec):
     replay_buffer = reverb.Table(
         name=adders.DEFAULT_PRIORITY_TABLE,
         max_size=1000000,
         remover=reverb.selectors.Fifo(),
         sampler=reverb.selectors.Uniform(),
         rate_limiter=reverb.rate_limiters.MinSize(min_size_to_sample=1),
-        signature = adders.NStepTransitionAdder.signature(environment_spec))
-    
-    server = reverb.Server([replay_buffer], port=None)
+        signature = adders.NStepTransitionAdder.signature(env_spec)
+    )
+
+    replay_server = reverb.Server([replay_buffer], port=None)
     replay_server_address = 'localhost:%d' % replay_server.port
-    
-    return server, replay_server_address
+
+    return replay_server, replay_server_address
 
 def createExperienceBuffer(serverAddress):
     adder = adders.NStepTransitionAdder(
@@ -245,7 +265,7 @@ def rest():
     learner_steps_taken = 0
     actor_steps_taken = 0
     for episode in range(num_training_episodes):
-    
+
         timestep = environment.reset()
         actor.observe_first(timestep)
         episode_return = 0
@@ -307,25 +327,35 @@ def rest():
     del replay_server
 
 def test():
-    environment_name = 'Assault-v4' 
+    environment_name = 'Assault-v4'
     env = createEnv(environment_name)
     env_spec = acme.make_environment_spec(env)
-    network = networks.DQNAtariNetwork(env_spec.actions.num_values)
+
+    #network = networks.DQNAtariNetwork(env_spec.actions.num_values)
+    network = MyDQNAtariNetwork(env_spec.actions.num_values)
 
     #print(env_spec)
     agent = dqn.DQN(env_spec, network)
 
     loop = acme.EnvironmentLoop(env, agent)
-    loop.run(FLAGS.num_episodes)
+    loop.run(FLAGS['num_episodes'])
+
+
+    server, address = createServer(env_spec)
+    buffer = createExperienceBuffer(address)
+    collectExperience(env, buffer, agent, 4)
+
+    saveVideo(buffer)
+
 
 def run():
-    environment_name = 'Assault-v4' 
+    environment_name = 'Assault-v4'
     display = createDisplay()
     env = createEnv(environment_name)
     espec = getEnvSpec(env)
     print(espec)
     agent = createAgent(espec)
-    
+
     #loopAgent(env, agent, 500)
     '''
     server, address = createServer()
