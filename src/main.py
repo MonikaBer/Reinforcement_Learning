@@ -154,13 +154,16 @@ def saveVideo(frames, filename='temp.mp4'):
     # Write video
     with imageio.get_writer(filename, fps=60) as video:
         for frame in frames:
-           video.append_data(frame)
+            video.append_data(frame)
     # Read video and display the video
     video = open(filename, 'rb').read()
     b64_video = base64.b64encode(video)
     video_tag = ('<video  width="160" height="210" controls alt="test" '
                 'src="data:video/mp4;base64,{0}">').format(b64_video.decode())
     return IPython.display.HTML(video_tag)
+
+def render(env):
+    return env.environment.render(mode = 'rgb_array')
 
 def collectFrames(environment, actor, steps = 500):
     frames = []
@@ -344,9 +347,10 @@ def test():
     server, address = createServer(env_spec)
     buffer = createExperienceBuffer(address)
     collectExperience(env, buffer, agent, 4)
+    #saveVideo(buffer)
 
-    saveVideo(buffer)
-
+    frames = collectFrames(env, agent)
+    saveVideo(frames)
 
 def run():
     environment_name = 'Assault-v4'
