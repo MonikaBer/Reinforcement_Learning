@@ -3,6 +3,7 @@ import acme
 from acme.agents.tf import actors as actors
 from acme.agents.tf import dqn
 from acme.agents.jax import impala
+from acme.tf import networks as net
 
 # own modules
 from algorithms.dqn import MyDQNAtariNetwork
@@ -18,9 +19,10 @@ FLAGS = {
 
 def createAgent(envSpec, algType):
     if algType == 'dqn':
-        network = MyDQNAtariNetwork(envSpec.actions.num_values)
+        #network = MyDQNAtariNetwork(envSpec.actions.num_values)
+        network = net.DQNAtariNetwork(envSpec.actions.num_values)
         agent = dqn.DQN(envSpec, network)
-    else:
+    elif (algType == 'impala'):
         config = impala.IMPALAConfig(
             batch_size = 16,
             sequence_period = 10,
@@ -39,6 +41,11 @@ def createAgent(envSpec, algType):
             initial_state_fn = networks.initial_state_fn,
             config = config,
         )
+
+        ser = agent._server
+    else:
+        raise Exception("Unknown parameter.")
+
     return agent
 
 
@@ -52,21 +59,25 @@ def execute(args):
     loop = acme.EnvironmentLoop(env, agent)
     loop.run(args.numEpisodes)
 
-    if args.algType == 'dqn':
-        server, address = createServer(envSpec)
+    if args.algType == 'impala':
+        #server, address = createServer(envSpec)
+        server = agent._server
+        address = f'localhost:{server.port}'
+
         buffer = createExperienceBuffer(address)
         collectExperience(env, buffer, agent, 4)
-        #saveVideo(buffer)
-
-    frames = collectFrames(env, agent)
-    saveVideo(frames, args.videoName)
-
+        saveVideo(buffer)
+    elif(args.algType == 'dqn'):
+        frames = collectFrames(env, agent)
+        saveVideo(frames, args.videoName)
+    else:
+        raise Exception("Unknown argument.")
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('--num_episodes', type = int, required = True, dest = 'numEpisodes',
+    parser.add_argument('--num_episodes', type = int, required = True, default = 500, dest = 'numEpisodes',
                         help = 'Number of training episodes')
-    parser.add_argument('--alg', type = str, required = True, dest = 'algType',
+    parser.add_argument('--alg', type = str, required = True, dest = 'algType', choices=['dqn', 'impala'],
                         help = 'Type of algorithm (dqn/impala)')
     parser.add_argument('--video_name', type = str, required = False, dest = 'videoName',
                         help = 'Filename for video saving')

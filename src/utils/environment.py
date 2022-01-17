@@ -57,7 +57,7 @@ def createEnv(envName, algType):
     env = wrappers.SinglePrecisionWrapper(env)
     if algType == 'impala':
         env = wrappers.ObservationActionRewardWrapper(env)
-        env = MyObservationTransformWrapper(env)
+    env = MyObservationTransformWrapper(env)
     timestep = env.reset()
     return env
 

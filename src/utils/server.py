@@ -6,7 +6,7 @@ from acme.datasets import reverb as datasets
 def createServer(envSpec):
     replayBuffer = reverb.Table(
         name = adders.DEFAULT_PRIORITY_TABLE,
-        max_size = 1000000,
+        max_size = 5000,
         remover = reverb.selectors.Fifo(),
         sampler = reverb.selectors.Uniform(),
         rate_limiter = reverb.rate_limiters.MinSize(min_size_to_sample = 1),
