@@ -1,12 +1,13 @@
 import reverb
 from acme.adders import reverb as adders
 from acme.datasets import reverb as datasets
+import numpy as np
 
 
 def createServer(envSpec):
     replayBuffer = reverb.Table(
         name = adders.DEFAULT_PRIORITY_TABLE,
-        max_size = 5000,
+        max_size = 1000,
         remover = reverb.selectors.Fifo(),
         sampler = reverb.selectors.Uniform(),
         rate_limiter = reverb.rate_limiters.MinSize(min_size_to_sample = 1),
@@ -27,7 +28,8 @@ def createExperienceBuffer(serverAddress):
     return adder
 
 
-def collectExperience(env, expBuffer, actor, numEpisodes = 2):
+def collectExperience(env, agent, numSteps = 500):
+    '''
     for episode in range(numEpisodes):
         timestep = env.reset()
         expBuffer.add_first(timestep)
@@ -36,13 +38,22 @@ def collectExperience(env, expBuffer, actor, numEpisodes = 2):
             action = actor.select_action(timestep.observation)
             timestep = env.step(action)
             expBuffer.add(action = action, next_timestep = timestep)
+    '''
+    frames = []
+    timestep = env.reset()
+
+    for _ in range(numSteps):
+        frames.append(env.environment.render(mode='rgb_array'))
+        action = agent.select_action(timestep.observation)
+        timestep = env.step(action)
+    return np.array(frames)
 
 
 def createReporter(serverAddress):
     dataset = iter(
         datasets.make_dataset(
             server_address = serverAddress,
-            batch_size = 256,
+            batch_size = 64,
             transition_adder = True,
             prefetch_size = 4
         )

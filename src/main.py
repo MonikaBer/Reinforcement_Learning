@@ -25,7 +25,7 @@ def createAgent(envSpec, algType):
     elif (algType == 'impala'):
         config = impala.IMPALAConfig(
             batch_size = 16,
-            sequence_period = 10,
+            sequence_period = 5,
             seed = 111,
         )
 
@@ -64,9 +64,9 @@ def execute(args):
         server = agent._server
         address = f'localhost:{server.port}'
 
-        buffer = createExperienceBuffer(address)
-        collectExperience(env, buffer, agent, 4)
-        saveVideo(buffer)
+        #buffer = createExperienceBuffer(address)
+        frames = collectExperience(env, agent, 500)
+        saveVideo(frames, args.videoName)
     elif(args.algType == 'dqn'):
         frames = collectFrames(env, agent)
         saveVideo(frames, args.videoName)
