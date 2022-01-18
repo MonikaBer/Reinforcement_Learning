@@ -41,8 +41,10 @@ class MyObservationTransformWrapper(base.EnvironmentWrapper):
     def _convert_value(self, nested_value: types.Nest) -> types.Nest:
         """Normalizacja inputu do zakresu [-1.0; 1.0]."""
         def _convert_single_value(value):
-            if value is not None and np.issubdtype(value.dtype, np.uint8):
-                value = ((np.array(value, copy = False, dtype = np.float32) / 255.0) - 1.0)
+            if(value is not None):
+                value = np.array(value, copy=False)
+                if(np.issubdtype(value.dtype, np.uint8)):
+                    value = ((np.array(value, copy = False, dtype = np.float32) / 255.0) - 1.0)
             return value
 
         return tree.map_structure(_convert_single_value, nested_value)
