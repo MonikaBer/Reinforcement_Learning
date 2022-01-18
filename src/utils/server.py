@@ -42,13 +42,13 @@ def collectExperience(env, agent, agentType, fname, numSteps = 500, saveCsv = Fa
     timestep = env.reset()
 
     dframe = pd.DataFrame(columns = ['akcja', 'nagroda', 'suma_nagród', 'reset'])
+    rewardSum = 0.0
 
     for i in range(numSteps):
         frames.append(env.environment.render(mode = 'rgb_array'))
         action = agent.select_action(timestep.observation)
 
         timestep = env.step(action)
-        rewardSum = 0.0
 
         if(agentType == 'dqn'):
             if(timestep.reward is None):
