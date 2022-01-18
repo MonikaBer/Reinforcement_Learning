@@ -9,8 +9,8 @@ from acme.tf import networks as net
 # own modules
 #from algorithms.dqn import MyDQNAtariNetwork
 #from algorithms.impala import MyImpalaAtariNetwork
-from utils.server import createServer, createExperienceBuffer, collectExperience
-from utils.display import collectFramesDQN, saveVideo
+from utils.server import collectExperience
+from utils.display import saveVideo
 from utils.environment import createEnv
 
 FLAGS = {
@@ -113,12 +113,11 @@ def execute(args):
         server = agent._server
         address = f'localhost:{server.port}'
         #buffer = createExperienceBuffer(address)
-        #frames = collectExperience(env, agent, args, 7500)
-        frames = collectExperience(env=env, agent=agent, agentType="impala", 
-            fname=fname, numSteps=7500, saveCsv=args.saveCsv)
+        frames = collectExperience(env = env, agent = agent, agentType = "impala",
+                                    fname = fname, numSteps = 7500, saveCsv = args.saveCsv)
     elif args.algType == 'dqn':
-        frames = collectExperience(env=env, agent=agent, agentType="dqn", 
-            fname=fname, numSteps=7500, saveCsv=args.saveCsv)
+        frames = collectExperience(env = env, agent = agent, agentType = "dqn",
+                                    fname = fname, numSteps = 7500, saveCsv = args.saveCsv)
     else:
         raise Exception("Unknown algorithm type")
 

@@ -3,7 +3,6 @@ import imageio
 import base64
 import IPython
 import numpy as np
-import pandas as pd
 
 
 def createDisplay(x = 160, y = 210):
@@ -12,29 +11,6 @@ def createDisplay(x = 160, y = 210):
 
 def render(env):
     return env.environment.render(mode = 'rgb_array')
-
-
-def collectFramesDQN(env, actor, fname, steps = 1000, saveCsv = False):
-    frames = []
-    timestep = env.reset()
-
-    dframe = pd.DataFrame(columns = ['akcja', 'nagroda', 'reset'])
-
-    for i in range(numSteps):
-        frames.append(env.environment.render(mode = 'rgb_array'))
-        action = agent.select_action(timestep.observation)
-
-        timestep = env.step(action)
-        print(timestep.observation)
-        if(timestep.reward is None):
-            dframe = dfapend(dframe, action=action, timestep=timestep, idx=i, envReset=True)
-            timestep = env.reset()
-        else:
-            dframe = dfapend(dframe, action=action, timestep=timestep, idx=i, envReset=False)
-
-    if saveCsv:
-        dframe.to_csv(fname, sep = ';', index=False)
-    return np.array(frames)
 
 
 def saveVideo(frames, filename = 'temp.mp4'):
