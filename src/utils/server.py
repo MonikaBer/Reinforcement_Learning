@@ -69,8 +69,12 @@ def collectExperience(env, agent, agentType, fname, numSteps = 500, saveCsv = Fa
         else:
             raise Exception("Unknown function type.")
 
+        if i % 200 == 0:
+            with open('logs/debug.log', 'a') as f:
+                f.write(f'TEST: step: {i + 1} / {numSteps}\n')
+
     if saveCsv:
-        dframe.to_csv(fname, sep = ';', index=False)
+        dframe.to_csv(fname, sep = ';', index = False)
     return np.array(frames)
 
 

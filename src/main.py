@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 import time
+import tensorflow
 import acme
 from acme.agents.tf import actors as actors
 from acme.agents.tf import dqn
@@ -129,6 +130,8 @@ def main():
     parser = ArgumentParser()
     parser.add_argument('--num_steps', type = int, required = False, default = 500, dest = 'numSteps',
                         help = 'Number of training steps')
+    parser.add_argument('--gpu', type = int, required = False, default = 1, choices = [0, 1], dest = 'gpu',
+                        help = 'Enable GPU')
     parser.add_argument('--alg', type = str, required = True, dest = 'algType', choices = ['dqn', 'impala'],
                         help = 'Type of algorithm (dqn/impala)')
     parser.add_argument('--save_video', type = int, required = False, default = 0, choices = [0, 1], dest = 'saveVideo',
@@ -148,6 +151,9 @@ def main():
     parser.add_argument('--max_abs_reward', type = str, required = False, default = 'None', dest = 'maxAbsReward',
                         help = 'Max absolute reward (for IMPALA) -> None == np.inf')
     args = parser.parse_args()
+
+    if not args.gpu:
+        tensorflow.config.set_visible_devices([], 'GPU')
 
     execute(args)
 
