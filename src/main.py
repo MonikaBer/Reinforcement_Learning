@@ -23,7 +23,7 @@ def createAgent(envSpec, algType):
     if algType == 'dqn':
         #network = MyDQNAtariNetwork(envSpec.actions.num_values)
         network = net.DQNAtariNetwork(envSpec.actions.num_values)
-        agent = dqn.DQN(envSpec, network)
+        agent = dqn.DQN(envSpec, network, batch_size = 128, samples_per_insert = 16)
     elif (algType == 'impala'):
         config = impala.IMPALAConfig(
             batch_size = 16,
