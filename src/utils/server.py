@@ -28,10 +28,11 @@ def createExperienceBuffer(serverAddress):
     )
     return adder
 
-def dfapend(olddframe, action, timestep, idx, envReset):
+def dfapend(olddframe, action, rewardSum, timestep, idx, envReset):
     newdframe = pd.DataFrame({
         'akcja': str(action),
         'nagroda': str(0.0 if timestep.reward is None else timestep.reward),
+        'suma_nagród': str(rewardSum),
         'reset': str(int(envReset))
     }, index = [idx])
     return olddframe.append(newdframe)
@@ -40,26 +41,31 @@ def collectExperience(env, agent, agentType, fname, numSteps = 500, saveCsv = Fa
     frames = []
     timestep = env.reset()
 
-    dframe = pd.DataFrame(columns = ['akcja', 'nagroda', 'reset'])
+    dframe = pd.DataFrame(columns = ['akcja', 'nagroda', 'suma_nagród', 'reset'])
 
     for i in range(numSteps):
         frames.append(env.environment.render(mode = 'rgb_array'))
         action = agent.select_action(timestep.observation)
 
         timestep = env.step(action)
+        rewardSum = 0.0
 
         if(agentType == 'dqn'):
             if(timestep.reward is None):
-                dframe = dfapend(dframe, action=action, timestep=timestep, idx=i, envReset=True)
+                rewardSum = 0.0
+                dframe = dfapend(dframe, action=action, rewardSum=rewardSum, timestep=timestep, idx=i, envReset=True)
                 timestep = env.reset()
             else:
-                dframe = dfapend(dframe, action=action, timestep=timestep, idx=i, envReset=False)
+                rewardSum += timestep.reward
+                dframe = dfapend(dframe, action=action, rewardSum=rewardSum, timestep=timestep, idx=i, envReset=False)
         elif(agentType == 'impala'):
             if(timestep.observation.reward is None): # needs double env.reset(), so we invoke env.reset()
-                dframe = dfapend(dframe, action=action, timestep=timestep, idx=i, envReset=True)
+                rewardSum = 0.0
+                dframe = dfapend(dframe, action=action, rewardSum=rewardSum, timestep=timestep, idx=i, envReset=True)
                 timestep = env.reset()
             else:
-                dframe = dfapend(dframe, action=action, timestep=timestep, idx=i, envReset=False)
+                rewardSum += timestep.reward
+                dframe = dfapend(dframe, action=action, rewardSum=rewardSum, timestep=timestep, idx=i, envReset=False)
         else:
             raise Exception("Unknown function type.")
 
