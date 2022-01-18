@@ -106,7 +106,7 @@ def execute(args):
 
     agent = createAgent(envSpec, args)
 
-    loop = MyLoop(env, agent, 70000)
+    loop = MyLoop(env, agent, 30000)
     loop._logger._to._to._to[1]._flush_every = 1
     loop.run(num_episodes = args.numSteps)
     fname = generateName(args)
