@@ -107,7 +107,7 @@ def execute(args):
 
     loop = acme.EnvironmentLoop(env, agent)
     loop._logger._to._to._to[1]._flush_every = 1
-    loop.run(num_steps = args.numSteps)
+    loop.run(num_episodes = args.numSteps)
     fname = generateName(args)
 
     if args.algType == 'impala':
