@@ -2,6 +2,7 @@ import reverb
 from acme.adders import reverb as adders
 from acme.datasets import reverb as datasets
 import numpy as np
+import pandas as pd
 
 
 def createServer(envSpec):
@@ -28,24 +29,25 @@ def createExperienceBuffer(serverAddress):
     return adder
 
 
-def collectExperience(env, agent, numSteps = 500):
-    '''
-    for episode in range(numEpisodes):
-        timestep = env.reset()
-        expBuffer.add_first(timestep)
-
-        while not timestep.last():
-            action = actor.select_action(timestep.observation)
-            timestep = env.step(action)
-            expBuffer.add(action = action, next_timestep = timestep)
-    '''
+def collectExperience(env, agent, fname, numSteps = 500):
     frames = []
     timestep = env.reset()
 
-    for _ in range(numSteps):
+    dframe = pd.DataFrame(columns=['akcja', 'nagroda'])
+
+    for i in range(numSteps):
         frames.append(env.environment.render(mode='rgb_array'))
         action = agent.select_action(timestep.observation)
+
+        newdframe = pd.DataFrame({
+            'akcja': str(action),
+            'nagroda': str(0 if timestep.reward is None else timestep.reward)
+        }, index=[i])
+        dframe = dframe.append(newdframe)
+
         timestep = env.step(action)
+
+    dframe.to_csv(fname, sep=';')
     return np.array(frames)
 
 

@@ -3,6 +3,7 @@ import imageio
 import base64
 import IPython
 import numpy as np
+import pandas as pd
 
 
 def createDisplay(x = 160, y = 210):
@@ -13,14 +14,25 @@ def render(env):
     return env.environment.render(mode = 'rgb_array')
 
 
-def collectFrames(env, actor, steps = 1000):
+def collectFrames(env, actor, fname, steps = 1000):
     frames = []
     timestep = env.reset()
 
-    for _ in range(steps):
+    dframe = pd.DataFrame(columns=['akcja', 'nagroda'])
+
+    for i in range(steps):
         frames.append(render(env))
         action = actor.select_action(timestep.observation)
+
+        newdframe = pd.DataFrame({
+            'akcja': str(action),
+            'nagroda': str(timestep.reward)
+        }, index=[1])
+        dframe = dframe.append(newdframe)
+
         timestep = env.step(action)
+
+    dframe.to_csv(fname, sep=';')
     return frames
 
 
@@ -35,6 +47,6 @@ def saveVideo(frames, filename = 'temp.mp4'):
     # Read video and display the video
     video = open(filename, 'rb').read()
     b64_video = base64.b64encode(video)
-    video_tag = ('<video  width="160" height="210" controls alt="test" '
+    video_tag = ('<video  width="160" height="224" controls alt="test" '
                 'src="data:video/mp4;base64,{0}">').format(b64_video.decode())
     return IPython.display.HTML(video_tag)
