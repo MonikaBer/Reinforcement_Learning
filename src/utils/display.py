@@ -31,6 +31,8 @@ def collectFrames(env, actor, fname, steps = 1000, saveCsv = False):
         dframe = dframe.append(newdframe)
 
         timestep = env.step(action)
+        if(timestep.observation.reward is None):
+            timestep = env.reset()
 
     if saveCsv:
         dframe.to_csv(fname, sep = ';')

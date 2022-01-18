@@ -46,6 +46,8 @@ def collectExperience(env, agent, fname, numSteps = 500, saveCsv = False):
         dframe = dframe.append(newdframe)
 
         timestep = env.step(action)
+        if(timestep.observation.reward is None):
+            timestep = env.reset()
 
     if saveCsv:
         dframe.to_csv(fname, sep = ';')
