@@ -66,7 +66,22 @@ def createAgent(envSpec, args):
     return agent
 
 
-def generateName(args):
+def generateVideoName(args):
+    fname = "video/" + \
+            str(time.time()) + "_" + \
+            args.algType + "_" + \
+            str(args.lr) + "_" + \
+            str(args.discount) + "_"
+
+    if args.algType == 'dqn':
+        fname += str(args.targetUpdatePeriod)
+    else:
+        fname += str(args.entropyCost)
+
+    return fname + ".mp4"
+
+
+def generateCsvName(args):
     fname = "csv/" + \
             str(time.time()) + "_" + \
             args.algType + "_" + \
@@ -91,7 +106,7 @@ def execute(args):
     loop = MyLoop(env, agent, 45000)
     loop._logger._to._to._to[1]._flush_every = 1
     loop.run(num_episodes = args.numEpisodes)
-    fname = generateName(args)
+    fname = generateCsvName(args)
 
     if args.algType == 'impala':
         #server, address = createServer(envSpec)
@@ -107,7 +122,11 @@ def execute(args):
         raise Exception("Unknown algorithm type")
 
     if args.saveVideo:
-        saveVideo(frames, args.videoName)
+        if args.videoName == None:
+            videoName = generateVideoName(args)
+        else:
+            videoName = args.videoName
+        saveVideo(frames, videoName)
 
 
 def main():
@@ -120,7 +139,7 @@ def main():
                         help = 'Type of algorithm (dqn/impala)')
     parser.add_argument('--save_video', type = int, required = False, default = 0, choices = [0, 1], dest = 'saveVideo',
                         help = 'Save video from model evaluation')
-    parser.add_argument('--video_name', type = str, required = False, default = 'temp.mp4', dest = 'videoName',
+    parser.add_argument('--video_name', type = str, required = False, dest = 'videoName',
                         help = 'Filename for video saving')
     parser.add_argument('--save_csv', type = int, required = False, default = 0, choices = [0, 1], dest = 'saveCsv',
                         help = 'Save csv from model evaluation')
