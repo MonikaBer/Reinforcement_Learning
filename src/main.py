@@ -10,7 +10,7 @@ from acme.tf import networks as net
 #from algorithms.dqn import MyDQNAtariNetwork
 #from algorithms.impala import MyImpalaAtariNetwork
 from utils.server import createServer, createExperienceBuffer, collectExperience
-from utils.display import collectFrames, saveVideo
+from utils.display import collectFramesDQN, saveVideo
 from utils.environment import createEnv
 
 FLAGS = {
@@ -114,13 +114,13 @@ def execute(args):
         address = f'localhost:{server.port}'
         #buffer = createExperienceBuffer(address)
         #frames = collectExperience(env, agent, args, 7500)
-        #frames = collectExperience(env, agent, fname, 7500, args.saveCsv)
+        frames = collectExperience(env=env, agent=agent, agentType="impala", 
+            fname=fname, numSteps=7500, saveCsv=args.saveCsv)
     elif args.algType == 'dqn':
-        pass
+        frames = collectExperience(env=env, agent=agent, agentType="dqn", 
+            fname=fname, numSteps=7500, saveCsv=args.saveCsv)
     else:
         raise Exception("Unknown algorithm type")
-
-    frames = collectExperience(env, agent, fname, 7500, args.saveCsv)
 
     if args.saveVideo:
         saveVideo(frames, args.videoName)

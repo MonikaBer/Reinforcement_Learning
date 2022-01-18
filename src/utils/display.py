@@ -14,29 +14,27 @@ def render(env):
     return env.environment.render(mode = 'rgb_array')
 
 
-def collectFrames(env, actor, fname, steps = 1000, saveCsv = False):
+def collectFramesDQN(env, actor, fname, steps = 1000, saveCsv = False):
     frames = []
     timestep = env.reset()
 
-    dframe = pd.DataFrame(columns = ['akcja', 'nagroda'])
+    dframe = pd.DataFrame(columns = ['akcja', 'nagroda', 'reset'])
 
-    for i in range(steps):
-        frames.append(render(env))
-        action = actor.select_action(timestep.observation)
-
-        newdframe = pd.DataFrame({
-            'akcja': str(action),
-            'nagroda': str(timestep.reward)
-        }, index = [1])
-        dframe = dframe.append(newdframe)
+    for i in range(numSteps):
+        frames.append(env.environment.render(mode = 'rgb_array'))
+        action = agent.select_action(timestep.observation)
 
         timestep = env.step(action)
-        if(timestep.observation.reward is None):
+        print(timestep.observation)
+        if(timestep.reward is None):
+            dframe = dfapend(dframe, action=action, timestep=timestep, idx=i, envReset=True)
             timestep = env.reset()
+        else:
+            dframe = dfapend(dframe, action=action, timestep=timestep, idx=i, envReset=False)
 
     if saveCsv:
-        dframe.to_csv(fname, sep = ';')
-    return frames
+        dframe.to_csv(fname, sep = ';', index=False)
+    return np.array(frames)
 
 
 def saveVideo(frames, filename = 'temp.mp4'):

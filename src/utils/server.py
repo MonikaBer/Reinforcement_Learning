@@ -36,7 +36,7 @@ def dfapend(olddframe, action, timestep, idx, envReset):
     }, index = [idx])
     return olddframe.append(newdframe)
 
-def collectExperience(env, agent, fname, numSteps = 500, saveCsv = False):
+def collectExperience(env, agent, agentType, fname, numSteps = 500, saveCsv = False):
     frames = []
     timestep = env.reset()
 
@@ -47,11 +47,21 @@ def collectExperience(env, agent, fname, numSteps = 500, saveCsv = False):
         action = agent.select_action(timestep.observation)
 
         timestep = env.step(action)
-        if(timestep.observation.reward is None):
-            dframe = dfapend(dframe, action=action, timestep=timestep, idx=i, envReset=True)
-            timestep = env.reset()
+
+        if(agentType == 'dqn'):
+            if(timestep.reward is None):
+                dframe = dfapend(dframe, action=action, timestep=timestep, idx=i, envReset=True)
+                timestep = env.reset()
+            else:
+                dframe = dfapend(dframe, action=action, timestep=timestep, idx=i, envReset=False)
+        elif(agentType == 'impala'):
+            if(timestep.observation.reward is None): # needs double env.reset(), so we invoke env.reset()
+                dframe = dfapend(dframe, action=action, timestep=timestep, idx=i, envReset=True)
+                timestep = env.reset()
+            else:
+                dframe = dfapend(dframe, action=action, timestep=timestep, idx=i, envReset=False)
         else:
-            dframe = dfapend(dframe, action=action, timestep=timestep, idx=i, envReset=False)
+            raise Exception("Unknown function type.")
 
     if saveCsv:
         dframe.to_csv(fname, sep = ';', index=False)
