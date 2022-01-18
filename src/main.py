@@ -15,6 +15,8 @@ from utils.server import collectExperience
 from utils.display import saveVideo
 from utils.environment import createEnv
 
+import pathlib
+
 FLAGS = {
     'env_name' : 'Assault-v4',  # v0 vs v4 ???
 }
@@ -65,6 +67,10 @@ def createAgent(envSpec, args):
 
     return agent
 
+def createFolders():
+    pathlib.Path("./video/").mkdir(parents=True, exist_ok=True)
+    pathlib.Path("./csv/").mkdir(parents=True, exist_ok=True)
+    pathlib.Path("./logs/").mkdir(parents=True, exist_ok=True)
 
 def generateVideoName(args):
     fname = "video/" + \
@@ -152,6 +158,8 @@ def main():
     parser.add_argument('--entropy_cost', type = float, required = False, default = 0.01, dest = 'entropyCost',
                         help = 'Entropy cost (for IMPALA)')
     args = parser.parse_args()
+
+    createFolders()
 
     text = '\n\nAttributes:\n'
     text += f'num_episodes: {args.numEpisodes}, gpu: {args.gpu}, alg: {args.algType}, save_video: {args.saveVideo}, ' + \
