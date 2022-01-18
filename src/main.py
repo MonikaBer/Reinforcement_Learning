@@ -153,6 +153,15 @@ def main():
                         help = 'Entropy cost (for IMPALA)')
     args = parser.parse_args()
 
+    text = '\n\nAttributes:\n'
+    text += f'num_episodes: {args.numEpisodes}, gpu: {args.gpu}, alg: {args.algType}, save_video: {args.saveVideo}, ' + \
+            f'video_name: {args.videoName}, save_csv: {args.saveCsv}, lr: {args.lr}, discount: {args.discount}, '
+    if args.algType == 'dqn':
+        text += f'target_update_period: {args.targetUpdatePeriod}\n\n'
+    else:
+        text += f'entropy_cost: {args.entropyCost}\n\n'
+    print(text)
+
     if not args.gpu:
         tensorflow.config.set_visible_devices([], 'GPU')
 

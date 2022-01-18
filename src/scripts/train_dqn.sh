@@ -35,8 +35,8 @@ for lr in "${LEARNING_RATE[@]}"; do
             python src/main.py \
                 --num_episodes ${NUM_EPISODES} \
                 --alg dqn \
-                --save_video 1
-                --save_csv 1
+                --save_video 1 \
+                --save_csv 1 \
                 --lr ${lr} \
                 --discount ${discount} \
                 --target_update_period ${target_update_period}
