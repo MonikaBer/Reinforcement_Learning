@@ -14,11 +14,11 @@ def render(env):
     return env.environment.render(mode = 'rgb_array')
 
 
-def collectFrames(env, actor, fname, steps = 1000):
+def collectFrames(env, actor, fname, steps = 1000, saveCsv = False):
     frames = []
     timestep = env.reset()
 
-    dframe = pd.DataFrame(columns=['akcja', 'nagroda'])
+    dframe = pd.DataFrame(columns = ['akcja', 'nagroda'])
 
     for i in range(steps):
         frames.append(render(env))
@@ -27,12 +27,13 @@ def collectFrames(env, actor, fname, steps = 1000):
         newdframe = pd.DataFrame({
             'akcja': str(action),
             'nagroda': str(timestep.reward)
-        }, index=[1])
+        }, index = [1])
         dframe = dframe.append(newdframe)
 
         timestep = env.step(action)
 
-    dframe.to_csv(fname, sep=';')
+    if saveCsv:
+        dframe.to_csv(fname, sep = ';')
     return frames
 
 

@@ -1,14 +1,13 @@
 from argparse import ArgumentParser
+import time
 import acme
 from acme.agents.tf import actors as actors
 from acme.agents.tf import dqn
 from acme.agents.jax import impala
 from acme.tf import networks as net
-import time
-import pandas as pd
 
 # own modules
-from algorithms.dqn import MyDQNAtariNetwork
+#from algorithms.dqn import MyDQNAtariNetwork
 #from algorithms.impala import MyImpalaAtariNetwork
 from utils.server import createServer, createExperienceBuffer, collectExperience
 from utils.display import collectFrames, saveVideo
@@ -19,16 +18,31 @@ FLAGS = {
 }
 
 
-def createAgent(envSpec, algType):
-    if algType == 'dqn':
+def createAgent(envSpec, args):
+    if args.algType == 'dqn':
         #network = MyDQNAtariNetwork(envSpec.actions.num_values)
         network = net.DQNAtariNetwork(envSpec.actions.num_values)
-        agent = dqn.DQN(envSpec, network, batch_size = 128, samples_per_insert = 16)
-    elif (algType == 'impala'):
+        agent = dqn.DQN(
+            envSpec,
+            network,
+            batch_size = 128,
+            samples_per_insert = 16,
+            checkpoint = False,
+            min_replay_size = 100,
+            max_replay_size = 500,
+            learning_rate = args.lr,
+            discount = args.discount,
+            target_update_period = args.targetUpdatePeriod
+        )
+    elif args.algType == 'impala':
         config = impala.IMPALAConfig(
             batch_size = 16,
             sequence_period = 5,
             seed = 111,
+            learning_rate = args.lr,
+            discount = args.discount,
+            entropy_cost = args.entropyCost,
+            max_abs_reward = args.maxAbsReward
         )
 
         networks = impala.make_atari_networks(envSpec)
@@ -44,61 +58,78 @@ def createAgent(envSpec, algType):
             config = config,
         )
 
-        ser = agent._server
+        serv = agent._server
     else:
-        raise Exception("Unknown parameter.")
+        raise Exception("Unknown algorithm type")
 
     return agent
 
+
 def generateName(args):
-    return str(args.algType) + "_" + str(args.numEpisodes) + "_" + str(time.time()) + ".csv"
+    fname = "csv/" + \
+            str(time.time()) + "_" + \
+            args.algType + "_" + \
+            str(args.lr) + "_" + \
+            str(args.discount) + "_"
+
+    if args.algType == 'dqn':
+        fname += str(args.targetUpdatePeriod)
+    else:
+        fname += str(args.entropyCost) + "_" + \
+                str(args.maxAbsReward)
+
+    return fname + ".csv"
+
 
 def execute(args):
     env = createEnv(FLAGS['env_name'], args.algType)
     envSpec = acme.make_environment_spec(env)
     #print(envSpec)
 
-    agent = createAgent(envSpec, args.algType)
+    agent = createAgent(envSpec, args)
 
     loop = acme.EnvironmentLoop(env, agent)
-    #loop.run(num_steps=60000)
-    loop.run(num_steps=1)
+    loop.run(num_steps = args.numSteps)
     fname = generateName(args)
 
     if args.algType == 'impala':
         #server, address = createServer(envSpec)
         server = agent._server
         address = f'localhost:{server.port}'
-
         #buffer = createExperienceBuffer(address)
-
         #frames = collectExperience(env, agent, args, 7500)
-        frames = collectExperience(env, agent, fname, 10)
-        saveVideo(frames, args.videoName)
-    elif(args.algType == 'dqn'):
-        frames = collectFrames(env, agent, fname, 7500)
-        saveVideo(frames, args.videoName)
+        frames = collectExperience(env, agent, fname, 7500, args.saveCsv)
+    elif args.algType == 'dqn':
+        frames = collectFrames(env, agent, fname, 7500, args.saveCsv)
     else:
-        raise Exception("Unknown argument.")
+        raise Exception("Unknown algorithm type")
+
+    if args.saveVideo:
+        saveVideo(frames, args.videoName)
+
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('--num_episodes', type = int, required = True, default = 500, dest = 'numEpisodes',
-                        help = 'Number of training episodes')
-    parser.add_argument('--alg', type = str, required = True, dest = 'algType', choices=['dqn', 'impala'],
+    parser.add_argument('--num_steps', type = int, required = False, default = 500, dest = 'numSteps',
+                        help = 'Number of training steps')
+    parser.add_argument('--alg', type = str, required = True, dest = 'algType', choices = ['dqn', 'impala'],
                         help = 'Type of algorithm (dqn/impala)')
-    parser.add_argument('--lr', type = float, required = False, choices=[0.001, 0.0001],
-                        help = 'Learning rate')
-    parser.add_argument('--disc', type = float, required = False, choices=[0.99, 0.95, 0.8],
-                        help = 'Discount')
-    parser.add_argument('--tupdateper', type = int, required = False, choices=[75, 400],
-                        help = 'Target update period')
-    parser.add_argument('--entropycost', type = int, required = False, choices=[0.01, 0.1],
-                        help = 'Entropy cost')
-    parser.add_argument('--maxabsr', type = float, required = False, default=None,
-                        help = 'Max absolute reward. None == np.inf')
-    parser.add_argument('--video_name', type = str, required = True, dest = 'videoName',
+    parser.add_argument('--save_video', type = int, required = False, default = 0, choices = [0, 1], dest = 'saveVideo',
+                        help = 'Save video from model evaluation')
+    parser.add_argument('--video_name', type = str, required = False, default = 'temp.mp4', dest = 'videoName',
                         help = 'Filename for video saving')
+    parser.add_argument('--save_csv', type = int, required = False, default = 0, choices = [0, 1], dest = 'saveCsv',
+                        help = 'Save csv from model evaluation')
+    parser.add_argument('--lr', type = float, required = False, default = 1e-3, dest = 'lr',
+                        help = 'Learning rate')
+    parser.add_argument('--discount', type = float, required = False, default = 0.99, dest = 'discount',
+                        help = 'Discount')
+    parser.add_argument('--target_update_period', type = int, required = False, default = 100, dest = 'targetUpdatePeriod',
+                        help = 'Target update period (for DQN)')
+    parser.add_argument('--entropy_cost', type = float, required = False, default = 0.01, dest = 'entropyCost',
+                        help = 'Entropy cost')
+    parser.add_argument('--max_abs_reward', type = float, required = False, default = None, dest = 'maxAbsReward',
+                        help = 'Max absolute reward. None == np.inf')
     args = parser.parse_args()
 
     execute(args)

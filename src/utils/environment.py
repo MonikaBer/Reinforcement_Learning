@@ -6,7 +6,6 @@ from acme import specs
 from acme.wrappers import base
 from acme import types
 from acme import wrappers
-import acme
 
 
 class MyObservationTransformWrapper(base.EnvironmentWrapper):
