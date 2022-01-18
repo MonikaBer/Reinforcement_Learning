@@ -52,17 +52,17 @@ def collectExperience(env, agent, agentType, fname, numSteps = 500, saveCsv = Fa
 
         if(agentType == 'dqn'):
             if(timestep.reward is None):
-                rewardSum = 0.0
                 dframe = dfapend(dframe, action=action, rewardSum=rewardSum, timestep=timestep, idx=i, envReset=True)
                 timestep = env.reset()
+                rewardSum = 0.0
             else:
                 rewardSum += timestep.reward
                 dframe = dfapend(dframe, action=action, rewardSum=rewardSum, timestep=timestep, idx=i, envReset=False)
         elif(agentType == 'impala'):
             if(timestep.observation.reward is None): # needs double env.reset(), so we invoke env.reset()
-                rewardSum = 0.0
                 dframe = dfapend(dframe, action=action, rewardSum=rewardSum, timestep=timestep, idx=i, envReset=True)
                 timestep = env.reset()
+                rewardSum = 0.0
             else:
                 rewardSum += timestep.reward
                 dframe = dfapend(dframe, action=action, rewardSum=rewardSum, timestep=timestep, idx=i, envReset=False)
