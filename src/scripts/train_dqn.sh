@@ -13,7 +13,7 @@ TARGET_UPDATE_PERIOD=("75" "400")       #default 100
 # MAX_REPLAY_SIZE=500                   #default 1_000_000      HARDCODED
 
 
-NUM_STEPS=75   #~30 min
+NUM_EPISODES=75   #~30 min
 
 
 all_exps=$((${#LEARNING_RATE[@]} * ${#DISCOUNT[@]} * ${#TARGET_UPDATE_PERIOD[@]}))  #12 experiments
@@ -33,7 +33,7 @@ for lr in "${LEARNING_RATE[@]}"; do
             echo -e "Model:DQN, lr:${lr}, discount:${discount}, target_update_period:${target_update_period}\n"
 
             python src/main.py \
-                --num_steps ${NUM_STEPS} \
+                --num_episodes ${NUM_EPISODES} \
                 --alg dqn \
                 --save_video 0
                 --save_csv 1

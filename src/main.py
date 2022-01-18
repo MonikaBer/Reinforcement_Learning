@@ -37,31 +37,14 @@ def createAgent(envSpec, args):
             target_update_period = args.targetUpdatePeriod
         )
     elif args.algType == 'impala':
-        if args.maxAbsReward != 'None':
-            try:
-                maxReward = float(args.maxAbsReward)
-            except:
-                raise RuntimeError('max_abs_reward argument must be float!')
-
-            config = impala.IMPALAConfig(
-                batch_size = 16,
-                sequence_period = 5,
-                seed = 111,
-                learning_rate = args.lr,
-                discount = args.discount,
-                entropy_cost = args.entropyCost,
-                max_abs_reward = maxReward
-            )
-        else:
-            config = impala.IMPALAConfig(
-                batch_size = 16,
-                sequence_period = 5,
-                seed = 111,
-                learning_rate = args.lr,
-                discount = args.discount,
-                entropy_cost = args.entropyCost
-            )
-
+        config = impala.IMPALAConfig(
+            batch_size = 16,
+            sequence_period = 5,
+            seed = 111,
+            learning_rate = args.lr,
+            discount = args.discount,
+            entropy_cost = args.entropyCost
+        )
 
         networks = impala.make_atari_networks(envSpec)
         #networks = MyImpalaAtariNetwork(envSpec)
@@ -93,8 +76,7 @@ def generateName(args):
     if args.algType == 'dqn':
         fname += str(args.targetUpdatePeriod)
     else:
-        fname += str(args.entropyCost) + "_" + \
-                str(args.maxAbsReward)
+        fname += str(args.entropyCost)
 
     return fname + ".csv"
 
@@ -108,7 +90,7 @@ def execute(args):
 
     loop = MyLoop(env, agent, 30000)
     loop._logger._to._to._to[1]._flush_every = 1
-    loop.run(num_episodes = args.numSteps)
+    loop.run(num_episodes = args.numEpisodes)
     fname = generateName(args)
 
     if args.algType == 'impala':
@@ -130,8 +112,8 @@ def execute(args):
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('--num_steps', type = int, required = False, default = 500, dest = 'numSteps',
-                        help = 'Number of training steps')
+    parser.add_argument('--num_episodes', type = int, required = False, default = 100, dest = 'numEpisodes',
+                        help = 'Number of training episodes')
     parser.add_argument('--gpu', type = int, required = False, default = 1, choices = [0, 1], dest = 'gpu',
                         help = 'Enable GPU')
     parser.add_argument('--alg', type = str, required = True, dest = 'algType', choices = ['dqn', 'impala'],
@@ -150,8 +132,6 @@ def main():
                         help = 'Target update period (for DQN)')
     parser.add_argument('--entropy_cost', type = float, required = False, default = 0.01, dest = 'entropyCost',
                         help = 'Entropy cost (for IMPALA)')
-    parser.add_argument('--max_abs_reward', type = str, required = False, default = 'None', dest = 'maxAbsReward',
-                        help = 'Max absolute reward (for IMPALA) -> None == np.inf')
     args = parser.parse_args()
 
     if not args.gpu:
