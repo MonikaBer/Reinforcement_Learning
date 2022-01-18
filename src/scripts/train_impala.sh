@@ -17,7 +17,7 @@ NUM_STEPS = 60000   #~30 min
 
 all_exp=$((${#LEARNING_RATE[@]} * ${#DISCOUNT[@]} * ${#ENTROPY_LOST[@]} * ${#MAX_ABS_REWARD[@]}))  #24 experiments
 
-FIRST_EXP_ID=0  #start point
+FIRST_EXP_ID=1  #start point
 LAST_EXP_ID=1   #end point
 
 curr_exp_id=0
