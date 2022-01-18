@@ -6,6 +6,7 @@ from acme.agents.tf import actors as actors
 from acme.agents.tf import dqn
 from acme.agents.jax import impala
 from acme.tf import networks as net
+from MyEnvLoop import MyEnvironmentLoop as MyLoop
 
 # own modules
 #from algorithms.dqn import MyDQNAtariNetwork
@@ -105,9 +106,9 @@ def execute(args):
 
     agent = createAgent(envSpec, args)
 
-    loop = acme.EnvironmentLoop(env, agent)
+    loop = MyLoop(env, agent, 70000)
     loop._logger._to._to._to[1]._flush_every = 1
-    loop.run(num_steps = args.numSteps)
+    loop.run(num_episodes = args.numSteps)
     fname = generateName(args)
 
     if args.algType == 'impala':
