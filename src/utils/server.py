@@ -28,29 +28,33 @@ def createExperienceBuffer(serverAddress):
     )
     return adder
 
+def dfapend(olddframe, action, timestep, idx, envReset):
+    newdframe = pd.DataFrame({
+        'akcja': str(action),
+        'nagroda': str(0 if timestep.reward is None else timestep.reward),
+        'reset': str(envReset)
+    }, index = [idx])
+    return olddframe.append(newdframe)
 
 def collectExperience(env, agent, fname, numSteps = 500, saveCsv = False):
     frames = []
     timestep = env.reset()
 
-    dframe = pd.DataFrame(columns = ['akcja', 'nagroda'])
+    dframe = pd.DataFrame(columns = ['akcja', 'nagroda', 'reset'])
 
     for i in range(numSteps):
         frames.append(env.environment.render(mode = 'rgb_array'))
         action = agent.select_action(timestep.observation)
 
-        newdframe = pd.DataFrame({
-            'akcja': str(action),
-            'nagroda': str(0 if timestep.reward is None else timestep.reward)
-        }, index = [i])
-        dframe = dframe.append(newdframe)
-
         timestep = env.step(action)
         if(timestep.observation.reward is None):
+            dframe = dfapend(dframe, action=action, timestep=timestep, idx=i, envReset=True)
             timestep = env.reset()
+        else:
+            dframe = dfapend(dframe, action=action, timestep=timestep, idx=i, envReset=False)
 
     if saveCsv:
-        dframe.to_csv(fname, sep = ';')
+        dframe.to_csv(fname, sep = ';', index=False)
     return np.array(frames)
 
 

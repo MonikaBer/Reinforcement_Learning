@@ -114,11 +114,13 @@ def execute(args):
         address = f'localhost:{server.port}'
         #buffer = createExperienceBuffer(address)
         #frames = collectExperience(env, agent, args, 7500)
-        frames = collectExperience(env, agent, fname, 7500, args.saveCsv)
+        #frames = collectExperience(env, agent, fname, 7500, args.saveCsv)
     elif args.algType == 'dqn':
-        frames = collectFrames(env, agent, fname, 7500, args.saveCsv)
+        pass
     else:
         raise Exception("Unknown algorithm type")
+
+    frames = collectExperience(env, agent, fname, 7500, args.saveCsv)
 
     if args.saveVideo:
         saveVideo(frames, args.videoName)
