@@ -35,15 +35,31 @@ def createAgent(envSpec, args):
             target_update_period = args.targetUpdatePeriod
         )
     elif args.algType == 'impala':
-        config = impala.IMPALAConfig(
-            batch_size = 16,
-            sequence_period = 5,
-            seed = 111,
-            learning_rate = args.lr,
-            discount = args.discount,
-            entropy_cost = args.entropyCost,
-            max_abs_reward = args.maxAbsReward
-        )
+        if args.maxAbsReward != 'None':
+            try:
+                maxReward = float(args.maxAbsReward)
+            except:
+                raise RuntimeError('max_abs_reward argument must be float!')
+
+            config = impala.IMPALAConfig(
+                batch_size = 16,
+                sequence_period = 5,
+                seed = 111,
+                learning_rate = args.lr,
+                discount = args.discount,
+                entropy_cost = args.entropyCost,
+                max_abs_reward = maxReward
+            )
+        else:
+            config = impala.IMPALAConfig(
+                batch_size = 16,
+                sequence_period = 5,
+                seed = 111,
+                learning_rate = args.lr,
+                discount = args.discount,
+                entropy_cost = args.entropyCost
+            )
+
 
         networks = impala.make_atari_networks(envSpec)
         #networks = MyImpalaAtariNetwork(envSpec)
@@ -128,7 +144,7 @@ def main():
                         help = 'Target update period (for DQN)')
     parser.add_argument('--entropy_cost', type = float, required = False, default = 0.01, dest = 'entropyCost',
                         help = 'Entropy cost')
-    parser.add_argument('--max_abs_reward', type = float, required = False, default = None, dest = 'maxAbsReward',
+    parser.add_argument('--max_abs_reward', type = str, required = False, default = 'None', dest = 'maxAbsReward',
                         help = 'Max absolute reward. None == np.inf')
     args = parser.parse_args()
 
