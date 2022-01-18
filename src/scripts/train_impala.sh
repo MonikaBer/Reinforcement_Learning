@@ -12,7 +12,7 @@ ENTROPY_COST=("0.01" "0.1")             #default 0.01
 MAX_ABS_REWARD=("100.0" "None")         #default np.inf (== None)
 
 
-NUM_STEPS=30000   #~30 min
+NUM_STEPS=75    #~30 min
 
 
 all_exps=$((${#LEARNING_RATE[@]} * ${#DISCOUNT[@]} * ${#ENTROPY_LOST[@]} * ${#MAX_ABS_REWARD[@]}))  #24 experiments
