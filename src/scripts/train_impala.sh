@@ -17,7 +17,8 @@ NUM_STEPS = 60000   #~30 min
 
 all_exp=$((${#LEARNING_RATE[@]} * ${#DISCOUNT[@]} * ${#ENTROPY_LOST[@]} * ${#MAX_ABS_REWARD[@]}))  #24 experiments
 
-STARTING_EXP_ID=0  #starting point
+FIRST_EXP_ID=0  #start point
+LAST_EXP_ID=1   #end point
 
 curr_exp_id=0
 for lr in "${LEARNING_RATE[@]}"; do
@@ -25,7 +26,7 @@ for lr in "${LEARNING_RATE[@]}"; do
         for entropy_cost in "${ENTROPY_COST[@]}"; do
             for max_abs_reward in "${MAX_ABS_REWARD[@]}"; do
                 ((curr_exp_id++))
-                if [ ${curr_exp_id} -lt ${STARTING_EXP_ID} ]; then
+                if [ ${curr_exp_id} -lt ${FIRST_EXP_ID} ]; then
                     continue
                 fi
                 echo -e "Starting experiment $((curr_exp_id)) / ${all_exps}"
@@ -45,6 +46,10 @@ for lr in "${LEARNING_RATE[@]}"; do
                 if [ $retVal -ne 0 ]; then
                     echo -e "\n\n Last run experiment $((curr_exp_id)) / ${all_exps}"
                     echo -e "Model:IMPALA, lr:${lr}, discount:${discount}, entropy_cost:${entropy_cost}, max_abs_reward:${max_abs_reward}\n"
+                    exit $retVal
+                fi
+
+                if [ ${curr_exp_id} -ge ${LAST_EXP_ID} ]; then
                     exit $retVal
                 fi
             done

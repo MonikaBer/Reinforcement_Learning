@@ -18,14 +18,15 @@ NUM_STEPS = 60000   #~30 min
 
 all_exps=$((${#LEARNING_RATE[@]} * ${#DISCOUNT[@]} * ${#TARGET_UPDATE_PERIOD[@]}))  #12 experiments
 
-STARTING_EXP_ID=0  #starting point
+FIRST_EXP_ID=1  #start point
+LAST_EXP_ID=1   #end point
 
 curr_exp_id=0
 for lr in "${LEARNING_RATE[@]}"; do
     for discount in "${DISCOUNT[@]}"; do
         for target_update_period in "${TARGET_UPDATE_PERIOD[@]}"; do
             ((curr_exp_id++))
-            if [ ${curr_exp_id} -lt ${STARTING_EXP_ID} ]; then
+            if [ ${curr_exp_id} -lt ${FIRST_EXP_ID} ]; then
                 continue
             fi
             echo -e "Starting experiment $((curr_exp_id)) / ${all_exps}"
@@ -44,6 +45,10 @@ for lr in "${LEARNING_RATE[@]}"; do
             if [ $retVal -ne 0 ]; then
                 echo -e "\n\n Last run experiment $((curr_exp_id)) / ${all_exps}"
                 echo -e "Model:DQN, lr:${lr}, discount:${discount}, target_update_period:${target_update_period}\n"
+                exit $retVal
+            fi
+
+            if [ ${curr_exp_id} -ge ${LAST_EXP_ID} ]; then
                 exit $retVal
             fi
         done
