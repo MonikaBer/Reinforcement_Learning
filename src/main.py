@@ -144,9 +144,9 @@ def main():
     parser.add_argument('--target_update_period', type = int, required = False, default = 100, dest = 'targetUpdatePeriod',
                         help = 'Target update period (for DQN)')
     parser.add_argument('--entropy_cost', type = float, required = False, default = 0.01, dest = 'entropyCost',
-                        help = 'Entropy cost')
+                        help = 'Entropy cost (for IMPALA)')
     parser.add_argument('--max_abs_reward', type = str, required = False, default = 'None', dest = 'maxAbsReward',
-                        help = 'Max absolute reward. None == np.inf')
+                        help = 'Max absolute reward (for IMPALA) -> None == np.inf')
     args = parser.parse_args()
 
     execute(args)
