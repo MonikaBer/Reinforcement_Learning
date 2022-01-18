@@ -4,6 +4,7 @@ from acme.agents.tf import actors as actors
 from acme.agents.tf import dqn
 from acme.agents.jax import impala
 from acme.tf import networks as net
+import time
 
 # own modules
 from algorithms.dqn import MyDQNAtariNetwork
@@ -57,7 +58,11 @@ def execute(args):
     agent = createAgent(envSpec, args.algType)
 
     loop = acme.EnvironmentLoop(env, agent)
-    loop.run(args.numEpisodes)
+    start = time.time_ns()
+    loop.run(num_steps=10)
+    end = time.time_ns()
+    print(end - start)
+    exit(0)
 
     if args.algType == 'impala':
         #server, address = createServer(envSpec)
@@ -65,6 +70,7 @@ def execute(args):
         address = f'localhost:{server.port}'
 
         #buffer = createExperienceBuffer(address)
+
         frames = collectExperience(env, agent, 500)
         saveVideo(frames, args.videoName)
     elif(args.algType == 'dqn'):
