@@ -44,33 +44,33 @@ def collectExperience(env, agent, agentType, fname, numSteps = 500, saveCsv = Fa
     dframe = pd.DataFrame(columns = ['akcja', 'nagroda', 'suma_nagród', 'reset'])
     rewardSum = 0.0
 
-    for i in range(numSteps):
-        frames.append(env.environment.render(mode = 'rgb_array'))
-        action = agent.select_action(timestep.observation)
+    with open('logs/debug.log', 'a') as f:
+        for i in range(numSteps):
+            frames.append(env.environment.render(mode = 'rgb_array'))
+            action = agent.select_action(timestep.observation)
 
-        timestep = env.step(action)
+            timestep = env.step(action)
 
-        if(agentType == 'dqn'):
-            if(timestep.reward is None):
-                dframe = dfapend(dframe, action=action, rewardSum=rewardSum, timestep=timestep, idx=i, envReset=True)
-                timestep = env.reset()
-                rewardSum = 0.0
+            if(agentType == 'dqn'):
+                if(timestep.reward is None):
+                    dframe = dfapend(dframe, action=action, rewardSum=rewardSum, timestep=timestep, idx=i, envReset=True)
+                    timestep = env.reset()
+                    rewardSum = 0.0
+                else:
+                    rewardSum += timestep.reward
+                    dframe = dfapend(dframe, action=action, rewardSum=rewardSum, timestep=timestep, idx=i, envReset=False)
+            elif(agentType == 'impala'):
+                if(timestep.observation.reward is None): # needs double env.reset(), so we invoke env.reset()
+                    dframe = dfapend(dframe, action=action, rewardSum=rewardSum, timestep=timestep, idx=i, envReset=True)
+                    timestep = env.reset()
+                    rewardSum = 0.0
+                else:
+                    rewardSum += timestep.reward
+                    dframe = dfapend(dframe, action=action, rewardSum=rewardSum, timestep=timestep, idx=i, envReset=False)
             else:
-                rewardSum += timestep.reward
-                dframe = dfapend(dframe, action=action, rewardSum=rewardSum, timestep=timestep, idx=i, envReset=False)
-        elif(agentType == 'impala'):
-            if(timestep.observation.reward is None): # needs double env.reset(), so we invoke env.reset()
-                dframe = dfapend(dframe, action=action, rewardSum=rewardSum, timestep=timestep, idx=i, envReset=True)
-                timestep = env.reset()
-                rewardSum = 0.0
-            else:
-                rewardSum += timestep.reward
-                dframe = dfapend(dframe, action=action, rewardSum=rewardSum, timestep=timestep, idx=i, envReset=False)
-        else:
-            raise Exception("Unknown function type.")
+                raise Exception("Unknown function type.")
 
-        if i % 200 == 0:
-            with open('logs/debug.log', 'a') as f:
+            if i % 200 == 0:
                 f.write(f'TEST: step: {i + 1} / {numSteps}\n')
 
     if saveCsv:
