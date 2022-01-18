@@ -32,7 +32,7 @@ def dfapend(olddframe, action, timestep, idx, envReset):
     newdframe = pd.DataFrame({
         'akcja': str(action),
         'nagroda': str(0 if timestep.reward is None else timestep.reward),
-        'reset': str(envReset)
+        'reset': str(int(envReset))
     }, index = [idx])
     return olddframe.append(newdframe)
 
