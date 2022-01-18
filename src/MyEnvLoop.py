@@ -67,6 +67,7 @@ class MyEnvironmentLoop(core.Worker):
     self._logger = logger or loggers.make_default_logger(label)
     self._should_update = should_update
     self._maxSteps = maxSteps
+    self._allSteps = 0
 
   def run_episode(self) -> loggers.LoggingData:
     """Run one episode.
@@ -90,11 +91,10 @@ class MyEnvironmentLoop(core.Worker):
 
     # Make the first observation.
     self._actor.observe_first(timestep)
-    steps = 0
 
     # Run an episode.
     while not timestep.last():
-      if steps >= self._maxSteps:
+      if self._allSteps >= self._maxSteps:
           break
       # Generate an action from the agent's policy and step the environment.
       action = self._actor.select_action(timestep.observation)
@@ -116,7 +116,7 @@ class MyEnvironmentLoop(core.Worker):
       episode_return = tree.map_structure(operator.iadd,
                                           episode_return,
                                           timestep.reward)
-      steps += 1
+      self._allSteps += 1
 
     # Record counts.
     counts = self._counter.increment(episodes=1, steps=episode_steps)
@@ -162,7 +162,7 @@ class MyEnvironmentLoop(core.Worker):
 
     episode_count, step_count = 0, 0
     with signals.runtime_terminator():
-      while not should_terminate(episode_count, step_count):
+      while (not should_terminate(episode_count, step_count) ) and self._allSteps < self._maxSteps:
         result = self.run_episode()
         episode_count += 1
         step_count += result['episode_length']
