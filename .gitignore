@@ -131,3 +131,4 @@ dmypy.json
 video/
 csv/
 logs/
+plots/
