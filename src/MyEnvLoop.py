@@ -29,6 +29,130 @@ from dm_env import specs
 import numpy as np
 import tree
 
+class CircularList():
+    """
+        Cykliczny bufor / lista. Może przechowywać ona wartości lub obiekty.
+        W przypadku obiektów, niektóre metody mogą nie zadziałać. 
+    """
+    class CircularListIter():
+        """
+            Iterator dla cyklicznej listy. Dzięki takiej implementacji można iterować po 
+            cyklicznej liście jednoczeście.
+            Iteracja następuje od najstarszej wartości do najnowszej.
+        """
+        def __init__(self, circularList):
+            self.circularList = circularList
+            self.__iter__()
+
+        def __iter__(self):
+            lo = list(range(self.circularList.arrayIndex))
+            hi = list(range(self.circularList.arrayIndex, len(self.circularList.array)))
+            lo.reverse()
+            hi.reverse()
+            self.indexArray = lo + hi
+            return self
+
+        def __next__(self):
+            if(self.indexArray):
+                idx = self.indexArray.pop(0)
+                return self.circularList.array[idx]
+            else:
+                raise StopIteration
+
+
+    def __init__(self, maxCapacity):
+        self.array = []
+        self.arrayIndex = 0
+        self.arrayMax = maxCapacity
+
+    def pushBack(self, value):
+        """
+            Dodaje na koniec listy cyklicznej wartość lub obiekt. 
+            Wstawiana wartość posiada największy indeks.
+        """
+        if(self.arrayIndex < len(self.array)):
+            del self.array[self.arrayIndex] # trzeba usunąć, inaczej insert zachowa w liście obiekt
+        self.array.insert(self.arrayIndex, value)
+        self.arrayIndex = (self.arrayIndex + 1) % self.arrayMax
+
+    def getAverage(self, startAt=0):
+        """
+            Zwraca średnią.
+            Argument startAt mówi o tym, od którego momentu w kolejce należy liczyć średnią.
+            Najstarsza wartość ma indeks 0.
+
+            Można jej użyć tylko do typów, które wspierają dodawanie, które
+            powinny implementować metody __copy__(self) oraz __deepcopy__(self)
+        """
+        l = len(self.array)
+        if(startAt == 0):
+            return sum(self.array) / l if l else 0
+        if(l <= startAt):
+            return 0
+        l -= startAt
+        tmpSum = None
+
+        for i, (obj) in enumerate(iter(self)):
+            if(i < startAt):
+                continue
+            tmpSum = copy.deepcopy(obj) # because of unknown type
+            break
+
+        for i, (obj) in enumerate(iter(self)):
+            if(i < startAt + 1):
+                continue
+            tmpSum += obj
+
+        return tmpSum / l
+
+    def getStdMean(self):
+        """
+            Zwraca tuple(std, mean) z całego cyklicznego bufora.
+        """
+        return self.getStd(), self.getMean()
+
+    def getMean(self):
+        return numpy.mean(self.array)
+
+    def getStd(self):
+        return numpy.std(self.array)
+
+    def __setstate__(self):
+        self.__dict__.update(state)
+        self.arrayIndex = self.arrayIndex % self.arrayMax
+
+    def reset(self):
+        """
+            Usuwa cały cykliczny bufor, zastępując go nowym.
+        """
+        del self.array
+        self.array = []
+        self.arrayIndex = 0
+
+    def __iter__(self):
+        return CircularList.CircularListIter(self)
+
+    def __len__(self):
+        return len(self.array)
+
+    def get(self, idx):
+        """
+            Najstarsza wartość ma indeks 0.
+        """
+        return self.array[(self.arrayIndex + idx) % self.arrayMax]
+
+    def getMin(self):
+        """
+            Zwraca minimalną wartość / obiekt z całego bufora cyklicznego.
+        """
+        return min(self.array)
+    
+    def getMax(self):
+        """
+            Zwraca maksymalną wartość / obiekt z całego bufora cyklicznego.
+        """
+        return max(self.array)
+
 
 class MyEnvironmentLoop(core.Worker):
   """A simple RL environment loop.
@@ -59,6 +183,7 @@ class MyEnvironmentLoop(core.Worker):
       logger: Optional[loggers.Logger] = None,
       should_update: bool = True,
       label: str = 'environment_loop',
+      bufferCap = 6
   ):
     # Internalize agent and environment.
     self._environment = environment
@@ -68,6 +193,7 @@ class MyEnvironmentLoop(core.Worker):
     self._should_update = should_update
     self._maxSteps = maxSteps
     self._allSteps = 0
+    self._circularBuffer = CircularList(bufferCap)
 
   def run_episode(self) -> loggers.LoggingData:
     """Run one episode.
@@ -98,7 +224,11 @@ class MyEnvironmentLoop(core.Worker):
           break
       # Generate an action from the agent's policy and step the environment.
       action = self._actor.select_action(timestep.observation)
+
       timestep = self._environment.step(action)
+      timestep = timestep._replace(
+        reward = convertReward(timestep.reward, self._circularBuffer, action)
+      )
 
       # Have the agent observe the timestep and let the actor update itself.
       self._actor.observe(action, next_timestep=timestep)
@@ -173,3 +303,21 @@ class MyEnvironmentLoop(core.Worker):
 def _generate_zeros_from_spec(spec: specs.Array) -> np.ndarray:
   return np.zeros(spec.shape, spec.dtype)
 
+def isActionMainShoot(action):
+  return action == 2
+
+def isActionSideShoot(action):
+  return action == 5 or action == 6
+
+def customReward(bufferAction: CircularList, reward, action):
+  if(reward is None):
+    return reward
+  tmp = 0.6 * float(isActionMainShoot(action)) + float(isActionSideShoot(action))
+  bufferAction.pushBack(tmp)
+  ret = reward - bufferAction.getAverage()
+  return np.array(ret, dtype=np.float32)
+
+def convertReward(nestedValueReward, bufferAction, action):
+  def _convertSingleValueReward(bufferAction: CircularList, reward, action):
+    return customReward(bufferAction, reward, action)
+  return tree.map_structure(_convertSingleValueReward, bufferAction, nestedValueReward, action)
