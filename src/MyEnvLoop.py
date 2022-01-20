@@ -28,6 +28,7 @@ import dm_env
 from dm_env import specs
 import numpy as np
 import tree
+import copy
 
 class CircularList():
     """
@@ -311,7 +312,7 @@ def isActionSideShoot(action):
 
 def customReward(bufferAction: CircularList, reward, action):
   if(reward is None):
-    return reward
+    return np.array(-100.0, dtype=np.float32)
   tmp = 0.6 * float(isActionMainShoot(action)) + float(isActionSideShoot(action))
   bufferAction.pushBack(tmp)
   ret = reward - bufferAction.getAverage()
