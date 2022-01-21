@@ -7,15 +7,15 @@ class Experiment:
     def __init__(self, file, steps, algType):
         self.filepath = file
         self.filename = file.name
-        self.name = (' '.join(self.filename.split('_')[1:])).rstrip('.csv')
         self.steps = steps
         self.algType = algType
-        self.getStats()
 
     def getStats(self):
+        self.name = (' '.join(self.filename.split('_')[1:])).rstrip('.csv')
         self.maxRewardsSums = []
         self.episodesLen = []
         episodeLen = 0
+
         for step in self.steps:
             episodeLen += 1
             if step.reset:
@@ -40,6 +40,7 @@ class Experiment:
                 min = i
             if max == -1 or i > max:
                 max = i
+
         self.maxRewardsSumMean = round(sum / float(len(self.maxRewardsSums)), 0)
         self.maxRewardsSumMin = min
         self.maxRewardsSumMax = max
@@ -180,6 +181,8 @@ def main():
                         help = 'Path to directory with csv files for analysing')
     parser.add_argument('--alg', type = str, required = True, choices = ['dqn', 'impala'], dest = 'algType',
                         help = 'Algorithm name (dqn/impala)')
+    parser.add_argument('--result_path', type = str, required = True, dest = 'resultPath',
+                        help = 'Path for stats saving')
     args = parser.parse_args()
 
     # create paths if not exist
@@ -195,7 +198,12 @@ def main():
             #print(file)
 
             steps = getAllSteps(file)
-            exps.append(Experiment(file, steps, args.algType))
+            experiment = Experiment(file, steps, args.algType)
+            if experiment.filename[0] != '.':
+                experiment.getStats()
+                exps.append(experiment)
+
+
 
     # print statistics
     print('\n\tSTATISTICS\n\n')
@@ -209,8 +217,11 @@ def main():
     print('rmin - min result')
     print('rm - mean result\n')
 
-    for exp in exps:
-        print(f'exp:{exp.name}, enr:{exp.episodesNr}, emin:{exp.episodesLenMin}, emax:{exp.episodesLenMax}, em:{exp.episodesLenMean}, rmax:{exp.maxRewardsSumMax}, rmin:{exp.maxRewardsSumMin}, rm:{exp.maxRewardsSumMean}\n')
+    with open(args.resultPath, 'w') as fSave:
+        for exp in exps:
+            print(f'exp:{exp.name}, enr:{exp.episodesNr}, emin:{exp.episodesLenMin}, emax:{exp.episodesLenMax}, em:{exp.episodesLenMean}, rmax:{exp.maxRewardsSumMax}, rmin:{exp.maxRewardsSumMin}, rm:{exp.maxRewardsSumMean}\n')
+            fSave.write(f'{exp.name}, {round(exp.maxRewardsSumMax / exp.episodesNr, 2)}\n')
+
 
     # plot statistics
     plotRewardsSum(exps, args.algType)
