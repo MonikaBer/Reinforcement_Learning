@@ -42,7 +42,7 @@ Argumenty wywołania (wraz z domyślnymi wartościami - jeśli są):
 
 Wymagane:
 
-- **- -alg** {dqn,impala} (typ algorytmu)
+- **- -alg** {dqn,impala,random} (typ algorytmu)
 
 Opcjonalne:
 
