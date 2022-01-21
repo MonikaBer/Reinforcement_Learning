@@ -93,6 +93,10 @@ Wymagane argumenty:
 - --alg {dqn,impala} (typ algorytmu)
 - --path PATH (ścieżka do katalogu z plikami csv do analizy (pochodzących z ewaluacji nauczonych modeli))
 
+Dodatkowa uwaga:
+
+- wykresy sporządzone na podstawie plików csv są zapisywane na ścieżce _**plots/<ALG_TYPE>/**_ 
+
 ## Dokumentacja
 Wstępna:
 [v1](https://demo.hedgedoc.org/CY_vyFK-R8u1ZieGybwuog?both#)
