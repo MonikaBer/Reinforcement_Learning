@@ -23,13 +23,16 @@ FLAGS = {
 
 
 def createAgent(envSpec, args):
+    batchs = args.batch_size
     if args.algType == 'dqn':
+        if(batchs is None):
+            batchs = 128
         #network = MyDQNAtariNetwork(envSpec.actions.num_values)
         network = net.DQNAtariNetwork(envSpec.actions.num_values)
         agent = dqn.DQN(
             envSpec,
             network,
-            batch_size = 128,
+            batch_size = batchs,
             samples_per_insert = 16,
             checkpoint = False,
             min_replay_size = 100,
@@ -39,8 +42,10 @@ def createAgent(envSpec, args):
             target_update_period = args.targetUpdatePeriod
         )
     elif args.algType == 'impala':
+        if(batchs is None):
+            batchs = 16
         config = impala.IMPALAConfig(
-            batch_size = 16,
+            batch_size = batchs,
             sequence_period = 5,
             seed = 111,
             learning_rate = args.lr,
@@ -109,7 +114,7 @@ def execute(args):
 
     agent = createAgent(envSpec, args)
 
-    loop = MyLoop(env, agent, 45000)
+    loop = MyLoop(env, agent, args.max_steps)
     loop._logger._to._to._to[1]._flush_every = 1
     loop.run(num_episodes = args.numEpisodes)
     fname = generateCsvName(args)
@@ -120,10 +125,10 @@ def execute(args):
         address = f'localhost:{server.port}'
         #buffer = createExperienceBuffer(address)
         frames = collectExperience(env = env, agent = agent, agentType = "impala",
-                                    fname = fname, numSteps = 7500, saveCsv = args.saveCsv)
+                                    fname = fname, numSteps = args.collect_frames, saveCsv = args.saveCsv)
     elif args.algType == 'dqn':
         frames = collectExperience(env = env, agent = agent, agentType = "dqn",
-                                    fname = fname, numSteps = 7500, saveCsv = args.saveCsv)
+                                    fname = fname, numSteps = args.collect_frames, saveCsv = args.saveCsv)
     else:
         raise Exception("Unknown algorithm type")
 
@@ -157,6 +162,12 @@ def main():
                         help = 'Target update period (for DQN)')
     parser.add_argument('--entropy_cost', type = float, required = False, default = 0.01, dest = 'entropyCost',
                         help = 'Entropy cost (for IMPALA)')
+    parser.add_argument('--max_steps', type = int, required = False, default = 45000,
+                        help = 'Maximum number of steps in any network.')
+    parser.add_argument('--batch_size', type = int, required = False, default = None,
+                        help = 'Batch size. By default for DQN - 128; IMPALA - 16')
+    parser.add_argument('--collect_frames', type = int, required = False, default = 7500,
+                        help = 'Collect frames for provided number of iterations. It is used outside train loop.')
     args = parser.parse_args()
 
     createFolders()
