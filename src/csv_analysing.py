@@ -179,8 +179,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', type = str, required = True,
                         help = 'Path to directory with csv files for analysing')
-    parser.add_argument('--alg', type = str, required = True, choices = ['dqn', 'impala'], dest = 'algType',
-                        help = 'Algorithm name (dqn/impala)')
+    parser.add_argument('--alg', type = str, required = True, choices = ['dqn', 'impala', 'random'], dest = 'algType',
+                        help = 'Algorithm name (dqn/impala/random)')
     parser.add_argument('--result_path', type = str, required = True, dest = 'resultPath',
                         help = 'Path for stats saving')
     args = parser.parse_args()
@@ -190,6 +190,8 @@ def main():
     Path("plots/dqn/rewards_sum").mkdir(parents = True, exist_ok = True)
     Path("plots/impala/episodes_len").mkdir(parents = True, exist_ok = True)
     Path("plots/dqn/episodes_len").mkdir(parents = True, exist_ok = True)
+    Path("plots/random/rewards_sum").mkdir(parents = True, exist_ok = True)
+    Path("plots/random/episodes_len").mkdir(parents = True, exist_ok = True)
 
     # load exps results from csv files
     exps = []
