@@ -8,9 +8,6 @@ from acme.agents.jax import impala
 from acme.tf import networks as net
 from MyEnvLoop import MyEnvironmentLoop as MyLoop
 
-# own modules
-#from algorithms.dqn import MyDQNAtariNetwork
-#from algorithms.impala import MyImpalaAtariNetwork
 from utils.server import collectExperience
 from utils.display import saveVideo
 from utils.environment import createEnv
@@ -18,7 +15,7 @@ from utils.environment import createEnv
 import pathlib
 
 FLAGS = {
-    'env_name' : 'Assault-v4',  # v0 vs v4 ???
+    'env_name' : 'Assault-v0',
 }
 
 
@@ -27,7 +24,6 @@ def createAgent(envSpec, args):
     if args.algType == 'dqn':
         if(batchs is None):
             batchs = 128
-        #network = MyDQNAtariNetwork(envSpec.actions.num_values)
         network = net.DQNAtariNetwork(envSpec.actions.num_values)
         agent = dqn.DQN(
             envSpec,
@@ -54,7 +50,6 @@ def createAgent(envSpec, args):
         )
 
         networks = impala.make_atari_networks(envSpec)
-        #networks = MyImpalaAtariNetwork(envSpec)
 
         agent = impala.IMPALAFromConfig(
             environment_spec = envSpec,
@@ -110,7 +105,6 @@ def generateCsvName(args):
 def execute(args):
     env = createEnv(FLAGS['env_name'], args.algType)
     envSpec = acme.make_environment_spec(env)
-    #print(envSpec)
 
     agent = createAgent(envSpec, args)
 
@@ -120,10 +114,8 @@ def execute(args):
     fname = generateCsvName(args)
 
     if args.algType == 'impala':
-        #server, address = createServer(envSpec)
         server = agent._server
         address = f'localhost:{server.port}'
-        #buffer = createExperienceBuffer(address)
         frames = collectExperience(env = env, agent = agent, agentType = "impala",
                                     fname = fname, numSteps = args.collect_frames, saveCsv = args.saveCsv)
     elif args.algType == 'dqn':
