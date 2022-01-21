@@ -95,10 +95,11 @@ Wymagane argumenty:
 
 - **- -alg** {dqn,impala} (typ algorytmu)
 - **- -path** PATH (ścieżka do katalogu z plikami csv do analizy (pochodzących z ewaluacji nauczonych modeli))
+- **- -result_path** PATH (ścieżka do zapisu interesującej statystyki)
 
 Dodatkowa uwaga:
 
-- wykresy sporządzone na podstawie plików csv są zapisywane na ścieżce _**plots/<ALG_TYPE>/**_
+- wykresy sporządzone na podstawie plików csv są zapisywane na ścieżce _**plots/<ALG_TYPE>/**_ w katalogach _**episodes_len**_ oraz _**rewards_sum**_
 
 ## Dokumentacja
 Wstępna:
