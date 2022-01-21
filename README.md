@@ -7,6 +7,9 @@ W katalogu głównym projektu:
 - utworzyć i aktywować środowisko wirtualne
 - zainstalować wymagane biblioteki
 
+Dla ułatwienia instalacji wymaganych rzeczy, przygotowano skrypt install.sh. Wystarczy go wywołać z głównego katalogu, a następnie
+aktywować nowo powstałe środowisko. Wymaga on już zainstalowanego python3.
+
 ```
 #instalacja Python 3.8
 sudo add-apt-repository ppa:deadsnakes/ppa
