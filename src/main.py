@@ -148,7 +148,7 @@ def main():
     parser.add_argument('--gpu', type = int, required = False, default = 1, choices = [0, 1], dest = 'gpu',
                         help = 'Enable GPU')
     parser.add_argument('--alg', type = str, required = True, dest = 'algType', choices = ['dqn', 'impala', 'random'],
-                        help = 'Type of algorithm (dqn/impala)')
+                        help = 'Type of algorithm (dqn/impala/random)')
     parser.add_argument('--save_video', type = int, required = False, default = 0, choices = [0, 1], dest = 'saveVideo',
                         help = 'Save video from model evaluation')
     parser.add_argument('--video_name', type = str, required = False, dest = 'videoName',
