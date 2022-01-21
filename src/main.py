@@ -77,8 +77,12 @@ def createFolders(args):
     pathlib.Path(LOGS_FOLDER).mkdir(parents=True, exist_ok=True)
 
 def generateVideoName(args):
-    fname = VIDEO_FOLDER + args.algType + '/' + \
-            str(time.time()) + "_" + \
+    fname = VIDEO_FOLDER + args.algType + '/'
+
+    if(args.videoName is not None):
+        return fname + args.videoName + ".mp4"
+
+    fname += str(time.time()) + "_" + \
             args.algType + "_" + \
             str(args.lr) + "_" + \
             str(args.discount) + "_"
@@ -133,10 +137,7 @@ def execute(args):
             raise Exception("Unknown algorithm type")
 
     if args.saveVideo:
-        if args.videoName == None:
-            videoName = generateVideoName(args)
-        else:
-            videoName = args.videoName
+        videoName = generateVideoName(args)
         saveVideo(frames, videoName)
 
 
@@ -147,7 +148,7 @@ def main():
     parser.add_argument('--gpu', type = int, required = False, default = 1, choices = [0, 1], dest = 'gpu',
                         help = 'Enable GPU')
     parser.add_argument('--alg', type = str, required = True, dest = 'algType', choices = ['dqn', 'impala', 'random'],
-                        help = 'Type of algorithm (dqn/impala)')
+                        help = 'Type of algorithm (dqn/impala/random)')
     parser.add_argument('--save_video', type = int, required = False, default = 0, choices = [0, 1], dest = 'saveVideo',
                         help = 'Save video from model evaluation')
     parser.add_argument('--video_name', type = str, required = False, dest = 'videoName',
