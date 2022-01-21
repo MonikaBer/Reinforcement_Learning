@@ -8,8 +8,8 @@ TARGET_UPDATE_PERIOD=("75" "400")       #default 100
 
 all_exps=$((${#LEARNING_RATE[@]} * ${#DISCOUNT[@]} * ${#TARGET_UPDATE_PERIOD[@]}))  #12 experiments
 
-FIRST_EXP_ID=1  #start point
-LAST_EXP_ID=12   #end point
+FIRST_EXP_ID=$1  #start point
+LAST_EXP_ID=$2   #end point
 
 curr_exp_id=0
 for lr in "${LEARNING_RATE[@]}"; do
@@ -23,12 +23,12 @@ for lr in "${LEARNING_RATE[@]}"; do
             echo -e "Model:DQN, lr:${lr}, discount:${discount}, target_update_period:${target_update_period}\n"
 
             python src/main.py \
-                --num_episodes $1 \
+                --num_episodes $3 \
                 --alg dqn \
                 --save_video 1 \
                 --save_csv 1 \
-                --max_steps $2 \
-                --collect_frames $3 \
+                --max_steps $4 \
+                --collect_frames $5 \
                 --lr ${lr} \
                 --discount ${discount} \
                 --target_update_period ${target_update_period}
