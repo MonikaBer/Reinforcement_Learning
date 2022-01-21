@@ -77,8 +77,12 @@ def createFolders(args):
     pathlib.Path(LOGS_FOLDER).mkdir(parents=True, exist_ok=True)
 
 def generateVideoName(args):
-    fname = VIDEO_FOLDER + args.algType + '/' + \
-            str(time.time()) + "_" + \
+    fname = VIDEO_FOLDER + args.algType + '/'
+
+    if(args.videoName is not None):
+        return fname + args.videoName + ".mp4"
+
+    fname += str(time.time()) + "_" + \
             args.algType + "_" + \
             str(args.lr) + "_" + \
             str(args.discount) + "_"
@@ -133,10 +137,7 @@ def execute(args):
             raise Exception("Unknown algorithm type")
 
     if args.saveVideo:
-        if args.videoName == None:
-            videoName = generateVideoName(args)
-        else:
-            videoName = args.videoName
+        videoName = generateVideoName(args)
         saveVideo(frames, videoName)
 
 
