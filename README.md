@@ -42,22 +42,22 @@ Argumenty wywołania (wraz z domyślnymi wartościami - jeśli są):
 
 Wymagane:
 
-- --alg {dqn,impala} (typ algorytmu)
+- **- -alg** {dqn,impala} (typ algorytmu)
 
 Opcjonalne:
 
-- --num_episodes NUM_EPISODES (max liczba epizodów gry podczas treningu) (domyślnie 100)
-- --max_steps MAX_STEPS (max liczba kroków gry podczas treningu) (domyślnie 45000)
-- --batch_size BATCH_SIZE (rozmiar batcha) (domyślnie: dla DQN - 128, dla IMPALA - 16)
-- --gpu {0,1} (uruchomienie na GPU) (domyślnie 1 - tak)
-- --save_video {0,1} (zapisanie pliku video z ewaluacji modelu) (domyślnie 0 - nie)
-- --save_csv {0,1} (zapisanie pliku csv z ewaluacji modelu) (domyślnie 0 - nie)
-- --video_name VIDEO_NAME (nazwa pliku video z ewaluacji modelu) (domyślnie 'temp.mp4')
-- --collect_frames COLLECT_FRAMES (liczba kroków ewaluacji modelu) (domyślnie 7500)
-- --lr LR (learning rate) (domyślnie 1e-3)
-- --discount DISCOUNT (dyskonto) (domyślnie 0.99)
-- --target_update_period TARGET_UPDATE_PERIOD (tylko dla DQN, docelowa liczba kroków przed uaktualnieniem wag w docelowej sieci, z której korzysta DQN) (domyślnie 100)
-- --entropy_cost ENTROPY_COST (tylko dla IMPALA, koszt entropii) (domyślnie 0.01)
+- **- -num_episodes** NUM_EPISODES (max liczba epizodów gry podczas treningu) (domyślnie 100)
+- **- -max_steps** MAX_STEPS (max liczba kroków gry podczas treningu) (domyślnie 45000)
+- **- -batch_size** BATCH_SIZE (rozmiar batcha) (domyślnie: dla DQN - 128, dla IMPALA - 16)
+- **- -gpu** {0,1} (uruchomienie na GPU) (domyślnie 1 - tak)
+- **- -save_video** {0,1} (zapisanie pliku video z ewaluacji modelu) (domyślnie 0 - nie)
+- **- -save_csv** {0,1} (zapisanie pliku csv z ewaluacji modelu) (domyślnie 0 - nie)
+- **- -video_name** VIDEO_NAME (nazwa pliku video z ewaluacji modelu) (domyślnie 'temp.mp4')
+- **- -collect_frames** COLLECT_FRAMES (liczba kroków ewaluacji modelu) (domyślnie 7500)
+- **- -lr** LR (learning rate) (domyślnie 1e-3)
+- **- -discount** DISCOUNT (dyskonto) (domyślnie 0.99)
+- **- -target_update_period** TARGET_UPDATE_PERIOD (tylko dla DQN, docelowa liczba kroków przed uaktualnieniem wag w docelowej sieci, z której korzysta DQN) (domyślnie 100)
+- **- -entropy_cost** ENTROPY_COST (tylko dla IMPALA, koszt entropii) (domyślnie 0.01)
 
 Dodatkowe uwagi:
 
@@ -93,12 +93,12 @@ python3.8 src/csv_analysing.py --help
 
 Wymagane argumenty:
 
-- --alg {dqn,impala} (typ algorytmu)
-- --path PATH (ścieżka do katalogu z plikami csv do analizy (pochodzących z ewaluacji nauczonych modeli))
+- **- -alg** {dqn,impala} (typ algorytmu)
+- **- -path** PATH (ścieżka do katalogu z plikami csv do analizy (pochodzących z ewaluacji nauczonych modeli))
 
 Dodatkowa uwaga:
 
-- wykresy sporządzone na podstawie plików csv są zapisywane na ścieżce _**plots/<ALG_TYPE>/**_ 
+- wykresy sporządzone na podstawie plików csv są zapisywane na ścieżce _**plots/<ALG_TYPE>/**_
 
 ## Dokumentacja
 Wstępna:
