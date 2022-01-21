@@ -154,11 +154,11 @@ def main():
                         help = 'Target update period (for DQN)')
     parser.add_argument('--entropy_cost', type = float, required = False, default = 0.01, dest = 'entropyCost',
                         help = 'Entropy cost (for IMPALA)')
-    parser.add_argument('--max_steps', type = int, required = False, default = 45000,
+    parser.add_argument('--max_steps', type = int, required = False, default = 100000,
                         help = 'Maximum number of steps in any network.')
     parser.add_argument('--batch_size', type = int, required = False, default = None,
                         help = 'Batch size. By default for DQN - 128; IMPALA - 16')
-    parser.add_argument('--collect_frames', type = int, required = False, default = 7500,
+    parser.add_argument('--collect_frames', type = int, required = False, default = 20000,
                         help = 'Collect frames for provided number of iterations. It is used outside train loop.')
     args = parser.parse_args()
 
