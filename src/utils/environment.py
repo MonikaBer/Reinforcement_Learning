@@ -51,13 +51,13 @@ class MyObservationTransformWrapper(base.EnvironmentWrapper):
 
 
 def createEnv(envName, algType):
-    if algType not in ['dqn', 'impala']:
+    if algType not in ['dqn', 'impala', 'random']:
         raise RuntimeError('wrong algorithm type (required: dqn/impala)')
 
     env = gym.make(envName)
     env = wrappers.gym_wrapper.GymWrapper(env)
     env = wrappers.SinglePrecisionWrapper(env)
-    if algType == 'impala':
+    if algType == 'impala': # not needed for 'random'
         env = wrappers.ObservationActionRewardWrapper(env)
     env = MyObservationTransformWrapper(env)
     timestep = env.reset()

@@ -3,7 +3,9 @@ from acme.adders import reverb as adders
 from acme.datasets import reverb as datasets
 import numpy as np
 import pandas as pd
+import random
 
+LOGS_FOLDER = "./logs/"
 
 def createServer(envSpec):
     replayBuffer = reverb.Table(
@@ -37,6 +39,35 @@ def dfapend(olddframe, action, rewardSum, timestep, idx, envReset):
     }, index = [idx])
     return olddframe.append(newdframe)
 
+def collectExperienceRandom(env, fname, numSteps = 500, saveCsv = False):
+    frames = []
+    timestep = env.reset()
+
+    dframe = pd.DataFrame(columns = ['akcja', 'nagroda', 'suma_nagród', 'reset'])
+    rewardSum = 0.0
+
+    with open(LOGS_FOLDER + 'debug.log', 'a') as f:
+        for i in range(numSteps):
+            frames.append(env.environment.render(mode = 'rgb_array'))
+            action = int(random.uniform(1.0, 6.9999))
+
+            timestep = env.step(action)
+
+            if(timestep.reward is None):
+                dframe = dfapend(dframe, action=action, rewardSum=rewardSum, timestep=timestep, idx=i, envReset=True)
+                timestep = env.reset()
+                rewardSum = 0.0
+            else:
+                rewardSum += timestep.reward
+                dframe = dfapend(dframe, action=action, rewardSum=rewardSum, timestep=timestep, idx=i, envReset=False)
+
+            if i % 200 == 0:
+                f.write(f'TEST: step: {i + 1} / {numSteps}\n')
+
+    if saveCsv:
+        dframe.to_csv(fname, sep = ';', index = False)
+    return np.array(frames)
+
 def collectExperience(env, agent, agentType, fname, numSteps = 500, saveCsv = False):
     frames = []
     timestep = env.reset()
@@ -44,7 +75,7 @@ def collectExperience(env, agent, agentType, fname, numSteps = 500, saveCsv = Fa
     dframe = pd.DataFrame(columns = ['akcja', 'nagroda', 'suma_nagród', 'reset'])
     rewardSum = 0.0
 
-    with open('logs/debug.log', 'a') as f:
+    with open(LOGS_FOLDER + 'debug.log', 'a') as f:
         for i in range(numSteps):
             frames.append(env.environment.render(mode = 'rgb_array'))
             action = agent.select_action(timestep.observation)

@@ -8,16 +8,20 @@ from acme.agents.jax import impala
 from acme.tf import networks as net
 from MyEnvLoop import MyEnvironmentLoop as MyLoop
 
-from utils.server import collectExperience
+from utils.server import collectExperience, collectExperienceRandom
 from utils.display import saveVideo
 from utils.environment import createEnv
 
 import pathlib
+import os
 
 FLAGS = {
     'env_name' : 'Assault-v0',
 }
 
+CSV_FOLDER = "./csv/"
+VIDEO_FOLDER = "./video/"
+LOGS_FOLDER = "./logs/"
 
 def createAgent(envSpec, args):
     batchs = args.batch_size
@@ -67,13 +71,13 @@ def createAgent(envSpec, args):
 
     return agent
 
-def createFolders():
-    pathlib.Path("./video/").mkdir(parents=True, exist_ok=True)
-    pathlib.Path("./csv/").mkdir(parents=True, exist_ok=True)
-    pathlib.Path("./logs/").mkdir(parents=True, exist_ok=True)
+def createFolders(args):
+    pathlib.Path(os.path.join(VIDEO_FOLDER, args.algType)).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(os.path.join(CSV_FOLDER, args.algType)).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(LOGS_FOLDER).mkdir(parents=True, exist_ok=True)
 
 def generateVideoName(args):
-    fname = "video/" + \
+    fname = VIDEO_FOLDER + args.algType + '/' + \
             str(time.time()) + "_" + \
             args.algType + "_" + \
             str(args.lr) + "_" + \
@@ -88,7 +92,7 @@ def generateVideoName(args):
 
 
 def generateCsvName(args):
-    fname = "csv/" + \
+    fname = CSV_FOLDER + args.algType + '/' + \
             str(time.time()) + "_" + \
             args.algType + "_" + \
             str(args.lr) + "_" + \
@@ -106,23 +110,27 @@ def execute(args):
     env = createEnv(FLAGS['env_name'], args.algType)
     envSpec = acme.make_environment_spec(env)
 
-    agent = createAgent(envSpec, args)
-
-    loop = MyLoop(env, agent, args.max_steps)
-    loop._logger._to._to._to[1]._flush_every = 1
-    loop.run(num_episodes = args.numEpisodes)
     fname = generateCsvName(args)
 
-    if args.algType == 'impala':
-        server = agent._server
-        address = f'localhost:{server.port}'
-        frames = collectExperience(env = env, agent = agent, agentType = "impala",
-                                    fname = fname, numSteps = args.collect_frames, saveCsv = args.saveCsv)
-    elif args.algType == 'dqn':
-        frames = collectExperience(env = env, agent = agent, agentType = "dqn",
-                                    fname = fname, numSteps = args.collect_frames, saveCsv = args.saveCsv)
+    if(args.algType == 'random'):
+        frames = collectExperienceRandom(env = env, fname = fname, numSteps = args.collect_frames, saveCsv = args.saveCsv)
     else:
-        raise Exception("Unknown algorithm type")
+        agent = createAgent(envSpec, args)
+
+        loop = MyLoop(env, agent, args.max_steps)
+        loop._logger._to._to._to[1]._flush_every = 1
+        loop.run(num_episodes = args.numEpisodes)
+
+        if args.algType == 'impala':
+            server = agent._server
+            address = f'localhost:{server.port}'
+            frames = collectExperience(env = env, agent = agent, agentType = "impala",
+                                        fname = fname, numSteps = args.collect_frames, saveCsv = args.saveCsv)
+        elif args.algType == 'dqn':
+            frames = collectExperience(env = env, agent = agent, agentType = "dqn",
+                                        fname = fname, numSteps = args.collect_frames, saveCsv = args.saveCsv)
+        else:
+            raise Exception("Unknown algorithm type")
 
     if args.saveVideo:
         if args.videoName == None:
@@ -138,7 +146,7 @@ def main():
                         help = 'Number of training episodes')
     parser.add_argument('--gpu', type = int, required = False, default = 1, choices = [0, 1], dest = 'gpu',
                         help = 'Enable GPU')
-    parser.add_argument('--alg', type = str, required = True, dest = 'algType', choices = ['dqn', 'impala'],
+    parser.add_argument('--alg', type = str, required = True, dest = 'algType', choices = ['dqn', 'impala', 'random'],
                         help = 'Type of algorithm (dqn/impala)')
     parser.add_argument('--save_video', type = int, required = False, default = 0, choices = [0, 1], dest = 'saveVideo',
                         help = 'Save video from model evaluation')
@@ -162,7 +170,7 @@ def main():
                         help = 'Collect frames for provided number of iterations. It is used outside train loop.')
     args = parser.parse_args()
 
-    createFolders()
+    createFolders(args)
 
     text = '\n\nAttributes:\n'
     text += f'num_episodes: {args.numEpisodes}, gpu: {args.gpu}, alg: {args.algType}, save_video: {args.saveVideo}, ' + \
